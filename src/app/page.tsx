@@ -314,7 +314,7 @@ export default function Home() {
             DepScope v1.0 — Dependency Risk Analyzer
           </span>
           <span className="text-[10px] font-mono" style={{ color: 'var(--text-tertiary)' }}>
-            AI powered by Gemma 2 via Groq
+            AI powered by Gemma 3 via Groq
           </span>
         </div>
       </footer>

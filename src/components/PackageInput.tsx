@@ -8,21 +8,46 @@ interface PackageInputProps {
   loading?: boolean;
 }
 
-const SAMPLE_PACKAGE_JSON = JSON.stringify({
-  name: "example-project",
+// Risky: deprecated packages, abandoned repos, known vulns, single maintainers, deep trees
+const SAMPLE_RISKY = JSON.stringify({
+  name: "legacy-monolith",
   version: "1.0.0",
   dependencies: {
-    "express": "^4.18.2",
-    "lodash": "^4.17.21",
-    "axios": "^1.6.0",
-    "moment": "^2.29.4",
-    "react": "^18.2.0",
-    "next": "^14.0.0"
+    "request": "^2.88.2",          // DEPRECATED since Feb 2020, massive dep tree
+    "jade": "^1.11.0",             // DEPRECATED, renamed to pug years ago
+    "node-uuid": "^1.4.8",         // DEPRECATED, replaced by uuid
+    "coffee-script": "^1.12.7",    // DEPRECATED, abandoned
+    "nomnom": "^1.8.1",            // Abandoned since 2014, no maintainers
+    "dominux": "^1.0.0",           // Tiny unmaintained package, near-zero downloads
+    "gulp": "^3.9.1",              // Very old major version, known vulns
+    "bower": "^1.8.14",            // DEPRECATED, entire tool is abandoned
+    "formidable": "^1.2.6",        // Old major with known vulns
+    "minimist": "^0.2.4"           // Old version range with prototype pollution CVEs
   },
   devDependencies: {
-    "typescript": "^5.3.0",
-    "eslint": "^8.55.0",
-    "jest": "^29.7.0"
+    "istanbul": "^0.4.5",          // DEPRECATED, replaced by nyc/c8
+    "grunt": "^1.6.1",             // Near-abandoned, very low activity
+    "sails": "^1.5.0"              // Declining maintenance, large dep tree
+  }
+}, null, 2);
+
+// Safe: actively maintained, popular, well-funded, minimal dep trees, frequent releases
+const SAMPLE_SAFE = JSON.stringify({
+  name: "modern-stack",
+  version: "1.0.0",
+  dependencies: {
+    "next": "^14.2.0",             // Vercel-backed, weekly releases, huge community
+    "react": "^18.3.0",            // Meta-backed, massive ecosystem
+    "react-dom": "^18.3.0",        // Same as react
+    "zod": "^3.23.0",              // Very active, single-purpose, zero deps
+    "drizzle-orm": "^0.30.0",      // Fast-growing, frequent releases
+    "@tanstack/react-query": "^5.50.0" // Very popular, active, well-maintained
+  },
+  devDependencies: {
+    "typescript": "^5.5.0",        // Microsoft-backed, monthly releases
+    "eslint": "^9.0.0",            // Huge community, active
+    "vitest": "^2.0.0",            // Very active, modern, fast releases
+    "prettier": "^3.3.0"           // Widely adopted, stable, regular updates
   }
 }, null, 2);
 
@@ -31,6 +56,7 @@ export default function PackageInput({ onSubmit, loading }: PackageInputProps) {
   const [text, setText] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
+  const [sampleMenuOpen, setSampleMenuOpen] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const validate = useCallback((raw: string): boolean => {
@@ -73,9 +99,10 @@ export default function PackageInput({ onSubmit, loading }: PackageInputProps) {
     if (file) handleFile(file);
   };
 
-  const loadSample = () => {
-    setText(SAMPLE_PACKAGE_JSON);
+  const loadSample = (type: 'risky' | 'safe') => {
+    setText(type === 'risky' ? SAMPLE_RISKY : SAMPLE_SAFE);
     setError(null);
+    setSampleMenuOpen(false);
   };
 
   return (
@@ -103,13 +130,83 @@ export default function PackageInput({ onSubmit, loading }: PackageInputProps) {
           </button>
         ))}
         <div className="flex-1" />
-        <button
-          onClick={loadSample}
-          className="px-4 py-3 text-[11px] font-mono uppercase tracking-wider transition-colors"
-          style={{ color: 'var(--text-tertiary)' }}
-        >
-          Load Sample
-        </button>
+
+        {/* Sample dropdown */}
+        <div className="relative">
+          <button
+            onClick={() => setSampleMenuOpen(!sampleMenuOpen)}
+            className="px-4 py-3 text-[11px] font-mono uppercase tracking-wider transition-colors flex items-center gap-1.5"
+            style={{ color: 'var(--text-tertiary)' }}
+          >
+            Load Sample
+            <span className="text-[9px]">{sampleMenuOpen ? '\u25b2' : '\u25bc'}</span>
+          </button>
+          <AnimatePresence>
+            {sampleMenuOpen && (
+              <>
+                {/* Backdrop to close menu */}
+                <div className="fixed inset-0 z-10" onClick={() => setSampleMenuOpen(false)} />
+                <motion.div
+                  initial={{ opacity: 0, y: -4, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -4, scale: 0.95 }}
+                  transition={{ duration: 0.15 }}
+                  className="absolute right-0 top-full mt-1 z-20 rounded-lg overflow-hidden"
+                  style={{
+                    background: 'var(--bg-elevated)',
+                    border: '1px solid var(--border-subtle)',
+                    boxShadow: '0 12px 40px rgba(0,0,0,0.5)',
+                    minWidth: 220,
+                  }}
+                >
+                  <button
+                    onClick={() => loadSample('risky')}
+                    className="w-full px-4 py-3 flex items-start gap-3 text-left transition-colors"
+                    style={{ borderBottom: '1px solid var(--border-dim)' }}
+                    onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-hover)')}
+                    onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                  >
+                    <span
+                      className="mt-0.5 w-5 h-5 rounded flex items-center justify-center text-[10px] font-mono font-bold flex-shrink-0"
+                      style={{ background: 'var(--red-dim)', color: 'var(--red-solid)', border: '1px solid var(--red-muted)' }}
+                    >
+                      !
+                    </span>
+                    <div>
+                      <div className="text-xs font-mono font-medium" style={{ color: 'var(--text-primary)' }}>
+                        High Risk Legacy Project
+                      </div>
+                      <div className="text-[10px] font-mono mt-0.5 leading-relaxed" style={{ color: 'var(--text-tertiary)' }}>
+                        13 deps — deprecated, abandoned, CVEs
+                      </div>
+                    </div>
+                  </button>
+                  <button
+                    onClick={() => loadSample('safe')}
+                    className="w-full px-4 py-3 flex items-start gap-3 text-left transition-colors"
+                    onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-hover)')}
+                    onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                  >
+                    <span
+                      className="mt-0.5 w-5 h-5 rounded flex items-center justify-center text-[10px] font-mono font-bold flex-shrink-0"
+                      style={{ background: 'var(--green-dim)', color: 'var(--green-solid)', border: '1px solid var(--green-muted)' }}
+                    >
+                      &#10003;
+                    </span>
+                    <div>
+                      <div className="text-xs font-mono font-medium" style={{ color: 'var(--text-primary)' }}>
+                        Low Risk Modern Stack
+                      </div>
+                      <div className="text-[10px] font-mono mt-0.5 leading-relaxed" style={{ color: 'var(--text-tertiary)' }}>
+                        10 deps — active, backed, zero-day safe
+                      </div>
+                    </div>
+                  </button>
+                </motion.div>
+              </>
+            )}
+          </AnimatePresence>
+        </div>
       </div>
 
       <div className="p-5">

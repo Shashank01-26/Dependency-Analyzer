@@ -48,7 +48,7 @@ export default function InsightsPanel({ insights, loading }: InsightsPanelProps)
             color: 'var(--cyan-solid)',
             border: '1px solid var(--cyan-muted)',
           }}>
-            GEMMA 2
+            GEMMA 3
           </span>
         </div>
         {loading && (

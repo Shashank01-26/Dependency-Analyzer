@@ -3,7 +3,7 @@ import { ScanResult, AIInsight, AnalyzedDependency } from '@/types';
 
 /**
  * Uses Groq's free API with Gemma model to generate human-readable insights.
- * Groq offers free tier access to Gemma 2 models with fast inference.
+ * Groq offers free tier access to Gemma 3 models with fast inference.
  *
  * Get a free API key at: https://console.groq.com
  */
