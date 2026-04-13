@@ -147,7 +147,7 @@ export default function Home() {
                 {[
                   { icon: '\u25c8', title: 'Risk Scoring', desc: 'Weighted composite of 5 signals' },
                   { icon: '\u25b2', title: 'Vuln Detection', desc: 'Live npm audit + CVE data' },
-                  { icon: '\u25cb', title: 'AI Analysis', desc: 'Gemma 3 powered insights' },
+                  { icon: '\u25cb', title: 'AI Analysis', desc: 'Llama 3.3 70B insights' },
                 ].map((f, i) => (
                   <motion.div
                     key={i}

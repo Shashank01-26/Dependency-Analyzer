@@ -2,7 +2,7 @@ import Groq from 'groq-sdk';
 import { ScanResult, AIInsight } from '@/types';
 
 /**
- * Uses Groq's free API with Gemma 3 27B model to generate human-readable insights.
+ * Uses Groq's free API with Llama 3.3 70B model to generate human-readable insights.
  * Get a free API key at: https://console.groq.com
  */
 
@@ -73,7 +73,7 @@ export async function generateInsights(scan: ScanResult): Promise<AIInsight[]> {
     const prompt = buildPrompt(scan);
 
     const completion = await client.chat.completions.create({
-      model: 'gemma2-9b-it',
+      model: 'llama-3.3-70b-versatile',
       messages: [
         {
           role: 'user',
