@@ -1,26 +1,194 @@
 @import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap');
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Core palette — obsidian mission control */
+  --bg-void: #06080c;
+  --bg-surface: #0c1018;
+  --bg-elevated: #121a26;
+  --bg-panel: #182030;
+  --bg-hover: #1e2a3c;
+
+  /* Borders */
+  --border-dim: #1a2438;
+  --border-subtle: #243044;
+  --border-active: #2e4060;
+
+  /* Text */
+  --text-primary: #e8ecf2;
+  --text-secondary: #8899b0;
+  --text-tertiary: #556680;
+
+  /* Phosphor green — safe/good */
+  --green-glow: #22ff88;
+  --green-solid: #1acc6e;
+  --green-muted: #0f8044;
+  --green-dim: #0a3d22;
+
+  /* Amber — warning */
+  --amber-glow: #ffbb33;
+  --amber-solid: #e09a20;
+  --amber-muted: #8a6018;
+  --amber-dim: #3a2a0c;
+
+  /* Red — critical */
+  --red-glow: #ff4466;
+  --red-solid: #e03050;
+  --red-muted: #882030;
+  --red-dim: #3a1018;
+
+  /* Cyan — info/accent */
+  --cyan-glow: #33ddff;
+  --cyan-solid: #20b0cc;
+  --cyan-muted: #186880;
+  --cyan-dim: #0c2a33;
+
+  /* Sizing */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-background: var(--bg-void);
+  --color-foreground: var(--text-primary);
+  --font-sans: 'DM Sans', sans-serif;
+  --font-mono: 'IBM Plex Mono', monospace;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-subtle) transparent;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg-void);
+  color: var(--text-primary);
+  font-family: 'DM Sans', sans-serif;
+  overflow-x: hidden;
+}
+
+/* Scanline overlay effect */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.03) 2px,
+    rgba(0, 0, 0, 0.03) 4px
+  );
+}
+
+/* Noise texture overlay */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9998;
+  opacity: 0.015;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+}
+
+/* Glow utilities */
+.glow-green {
+  box-shadow: 0 0 20px rgba(34, 255, 136, 0.15), 0 0 60px rgba(34, 255, 136, 0.05);
+}
+.glow-amber {
+  box-shadow: 0 0 20px rgba(255, 187, 51, 0.15), 0 0 60px rgba(255, 187, 51, 0.05);
+}
+.glow-red {
+  box-shadow: 0 0 20px rgba(255, 68, 102, 0.15), 0 0 60px rgba(255, 68, 102, 0.05);
+}
+.glow-cyan {
+  box-shadow: 0 0 20px rgba(51, 221, 255, 0.15), 0 0 60px rgba(51, 221, 255, 0.05);
+}
+
+/* Risk level color classes */
+.risk-low { color: var(--green-solid); }
+.risk-medium { color: var(--amber-solid); }
+.risk-high { color: var(--red-solid); }
+.risk-critical { color: var(--red-glow); }
+
+.risk-bg-low { background: var(--green-dim); border-color: var(--green-muted); }
+.risk-bg-medium { background: var(--amber-dim); border-color: var(--amber-muted); }
+.risk-bg-high { background: var(--red-dim); border-color: var(--red-muted); }
+.risk-bg-critical { background: rgba(255, 68, 102, 0.15); border-color: var(--red-solid); }
+
+/* Panel styling */
+.panel {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-dim);
+  border-radius: var(--radius-md);
+}
+
+.panel-inner {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-dim);
+  border-radius: var(--radius-sm);
+}
+
+/* Score arc animation */
+@keyframes score-fill {
+  from { stroke-dashoffset: 283; }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+@keyframes grid-scroll {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(20px); }
+}
+
+/* Grid background pattern */
+.grid-bg {
+  background-image:
+    linear-gradient(var(--border-dim) 1px, transparent 1px),
+    linear-gradient(90deg, var(--border-dim) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+/* Textarea styling */
+textarea {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 13px;
+  resize: vertical;
+}
+
+textarea:focus {
+  outline: none;
+  border-color: var(--cyan-muted);
+  box-shadow: 0 0 0 2px rgba(51, 221, 255, 0.1);
+}
+
+textarea::placeholder {
+  color: var(--text-tertiary);
+}
+
+/* Custom scrollbar for webkit */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-subtle);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--border-active);
 }
