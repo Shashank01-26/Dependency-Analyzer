@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface PackageInputProps {
@@ -57,7 +58,9 @@ export default function PackageInput({ onSubmit, loading }: PackageInputProps) {
   const [error, setError] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const [sampleMenuOpen, setSampleMenuOpen] = useState(false);
+  const [menuPos, setMenuPos] = useState({ top: 0, right: 0 });
   const fileRef = useRef<HTMLInputElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
 
   const validate = useCallback((raw: string): boolean => {
     try {
@@ -104,7 +107,7 @@ export default function PackageInput({ onSubmit, loading }: PackageInputProps) {
   return (
     <div className="glass-lg shine-top">
       {/* Tab bar */}
-      <div className="flex border-b relative" style={{ borderColor: 'var(--border-1)' }}>
+      <div className="flex border-b" style={{ borderColor: 'var(--border-1)' }}>
         {(['paste', 'upload'] as const).map(m => (
           <button
             key={m}
@@ -125,48 +128,62 @@ export default function PackageInput({ onSubmit, loading }: PackageInputProps) {
         ))}
         <div className="flex-1" />
 
-        {/* Sample dropdown */}
-        <div className="relative">
-          <button
-            onClick={() => setSampleMenuOpen(!sampleMenuOpen)}
-            className="px-5 py-3.5 mono text-[10px] uppercase tracking-[0.15em] transition-colors flex items-center gap-2"
-            style={{ color: 'var(--text-3)' }}
+        {/* Sample dropdown trigger */}
+        <button
+          ref={triggerRef}
+          onClick={() => {
+            if (!sampleMenuOpen && triggerRef.current) {
+              const rect = triggerRef.current.getBoundingClientRect();
+              setMenuPos({ top: rect.bottom + 6, right: window.innerWidth - rect.right });
+            }
+            setSampleMenuOpen(!sampleMenuOpen);
+          }}
+          className="px-5 py-3.5 mono text-[10px] uppercase tracking-[0.15em] transition-colors flex items-center gap-2"
+          style={{ color: 'var(--text-3)' }}
+        >
+          Load Sample
+          <motion.span
+            animate={{ rotate: sampleMenuOpen ? 180 : 0 }}
+            transition={{ duration: 0.2 }}
+            className="text-[8px]"
           >
-            Load Sample
-            <motion.span
-              animate={{ rotate: sampleMenuOpen ? 180 : 0 }}
-              transition={{ duration: 0.2 }}
-              className="text-[8px]"
-            >
-              &#9660;
-            </motion.span>
-          </button>
+            &#9660;
+          </motion.span>
+        </button>
+
+        {/* Portal dropdown — rendered outside the overflow:hidden container */}
+        {typeof document !== 'undefined' && createPortal(
           <AnimatePresence>
             {sampleMenuOpen && (
               <>
-                <div className="fixed inset-0 z-10" onClick={() => setSampleMenuOpen(false)} />
+                <div className="fixed inset-0 z-[60]" onClick={() => setSampleMenuOpen(false)} />
                 <motion.div
-                  initial={{ opacity: 0, y: -8, scale: 0.95 }}
+                  initial={{ opacity: 0, y: -6, scale: 0.96 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: -8, scale: 0.95 }}
-                  transition={{ duration: 0.2, ease: [0.25, 0.1, 0.25, 1] }}
-                  className="absolute right-0 top-full mt-2 z-20 glass rounded-xl overflow-hidden"
+                  exit={{ opacity: 0, y: -6, scale: 0.96 }}
+                  transition={{ duration: 0.18, ease: [0.25, 0.1, 0.25, 1] }}
+                  className="fixed z-[70] rounded-xl overflow-hidden"
                   style={{
-                    minWidth: 260,
-                    boxShadow: '0 20px 60px rgba(0,0,0,0.6), 0 0 40px rgba(34,211,238,0.03)',
+                    top: menuPos.top,
+                    right: menuPos.right,
+                    width: 260,
+                    background: 'var(--elevated)',
+                    border: '1px solid var(--border-2)',
+                    boxShadow: '0 20px 60px rgba(0,0,0,0.7), 0 0 1px rgba(125,211,252,0.1)',
+                    backdropFilter: 'blur(20px)',
                   }}
                 >
                   <button
                     onClick={() => loadSample('risky')}
                     className="w-full px-5 py-4 flex items-start gap-3 text-left transition-all group"
                     style={{ borderBottom: '1px solid var(--border-1)' }}
+                    onMouseEnter={e => (e.currentTarget.style.background = 'var(--hover)')}
+                    onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
                   >
                     <span
                       className="mt-0.5 w-6 h-6 rounded-lg flex items-center justify-center mono text-[10px] font-bold flex-shrink-0 transition-transform group-hover:scale-110"
                       style={{ background: 'var(--red-3)', color: 'var(--red-1)', border: '1px solid rgba(248,113,113,0.2)' }}
-                    >
-                      !
-                    </span>
+                    >!</span>
                     <div>
                       <div className="text-xs font-medium group-hover:text-[var(--text-1)] transition-colors" style={{ color: 'var(--text-2)', fontFamily: 'var(--font-body)' }}>
                         High Risk Legacy Project
@@ -179,13 +196,13 @@ export default function PackageInput({ onSubmit, loading }: PackageInputProps) {
                   <button
                     onClick={() => loadSample('safe')}
                     className="w-full px-5 py-4 flex items-start gap-3 text-left transition-all group"
+                    onMouseEnter={e => (e.currentTarget.style.background = 'var(--hover)')}
+                    onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
                   >
                     <span
                       className="mt-0.5 w-6 h-6 rounded-lg flex items-center justify-center mono text-[10px] font-bold flex-shrink-0 transition-transform group-hover:scale-110"
                       style={{ background: 'var(--green-3)', color: 'var(--green-1)', border: '1px solid rgba(74,222,128,0.2)' }}
-                    >
-                      &#10003;
-                    </span>
+                    >&#10003;</span>
                     <div>
                       <div className="text-xs font-medium group-hover:text-[var(--text-1)] transition-colors" style={{ color: 'var(--text-2)', fontFamily: 'var(--font-body)' }}>
                         Low Risk Modern Stack
@@ -198,8 +215,9 @@ export default function PackageInput({ onSubmit, loading }: PackageInputProps) {
                 </motion.div>
               </>
             )}
-          </AnimatePresence>
-        </div>
+          </AnimatePresence>,
+          document.body
+        )}
       </div>
 
       <div className="p-6">
