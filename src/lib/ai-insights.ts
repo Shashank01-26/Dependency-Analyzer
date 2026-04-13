@@ -129,7 +129,7 @@ export async function generateInsights(scan: ScanResult): Promise<AIInsight[]> {
     const prompt = buildAnalysisPrompt(scan);
 
     const completion = await client.chat.completions.create({
-      model: 'gemma2-9b-it',
+      model: 'gemma3-27b-it',
       messages: [
         {
           role: 'system',
