@@ -102,9 +102,9 @@ export default function PackageInput({ onSubmit, loading }: PackageInputProps) {
   };
 
   return (
-    <div className="glass-lg shine-top overflow-hidden">
+    <div className="glass-lg shine-top">
       {/* Tab bar */}
-      <div className="flex border-b" style={{ borderColor: 'var(--border-1)' }}>
+      <div className="flex border-b relative" style={{ borderColor: 'var(--border-1)' }}>
         {(['paste', 'upload'] as const).map(m => (
           <button
             key={m}

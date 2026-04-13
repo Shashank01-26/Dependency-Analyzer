@@ -140,7 +140,6 @@ body {
   border: 1px solid var(--glass-border);
   border-radius: var(--radius);
   position: relative;
-  overflow: hidden;
 }
 
 .glass::before {
@@ -159,7 +158,6 @@ body {
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-lg);
   position: relative;
-  overflow: hidden;
 }
 
 .glass-lg::before {

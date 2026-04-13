@@ -1,8 +1,7 @@
 'use client';
 
-import { useEffect, useRef, useState, useMemo, useCallback } from 'react';
+import { useEffect, useRef, useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import * as d3 from 'd3';
 import { DependencyTreeNode, RiskLevel } from '@/types';
 
 const COLORS: Record<RiskLevel, string> = {
@@ -19,28 +18,34 @@ const GLOW: Record<RiskLevel, string> = {
   critical: 'rgba(255,107,107,0.45)',
 };
 
-interface SimNode extends d3.SimulationNodeDatum {
+interface GraphNode {
   id: string;
   name: string;
   riskLevel: RiskLevel;
   score: number;
   depth: number;
   childCount: number;
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  fx?: number | null;
+  fy?: number | null;
 }
 
-interface SimLink extends d3.SimulationLinkDatum<SimNode> {
-  source: string | SimNode;
-  target: string | SimNode;
+interface GraphLink {
+  sourceId: string;
+  targetId: string;
 }
 
-function flatten(tree: DependencyTreeNode[]): { nodes: SimNode[]; links: SimLink[] } {
-  const nodes: SimNode[] = [];
-  const links: SimLink[] = [];
+function flatten(tree: DependencyTreeNode[]): { nodes: GraphNode[]; links: GraphLink[] } {
+  const nodes: GraphNode[] = [];
+  const links: GraphLink[] = [];
   const seen = new Set<string>();
 
   function walk(node: DependencyTreeNode, depth: number, parentId: string | null) {
     if (seen.has(node.name)) {
-      if (parentId) links.push({ source: parentId, target: node.name });
+      if (parentId) links.push({ sourceId: parentId, targetId: node.name });
       return;
     }
     seen.add(node.name);
@@ -52,10 +57,10 @@ function flatten(tree: DependencyTreeNode[]): { nodes: SimNode[]; links: SimLink
       score: node.score,
       depth,
       childCount: node.children.length,
+      x: 0, y: 0, vx: 0, vy: 0,
     });
 
-    if (parentId) links.push({ source: parentId, target: node.name });
-
+    if (parentId) links.push({ sourceId: parentId, targetId: node.name });
     if (depth < 3) {
       node.children.forEach(child => walk(child, depth + 1, node.name));
     }
@@ -65,266 +70,176 @@ function flatten(tree: DependencyTreeNode[]): { nodes: SimNode[]; links: SimLink
   return { nodes, links };
 }
 
+function getRadius(depth: number): number {
+  if (depth === 0) return 24;
+  if (depth === 1) return 18;
+  return 13;
+}
+
+/**
+ * Simple force simulation run synchronously (no D3 dependency).
+ * Avoids all SSR/DOM issues. Runs a fixed number of iterations.
+ */
+function runLayout(
+  nodes: GraphNode[],
+  links: GraphLink[],
+  width: number,
+  height: number
+): GraphNode[] {
+  const result = nodes.map((n, i) => ({
+    ...n,
+    // Initialize in a spread circle so they don't all start at 0,0
+    x: width / 2 + Math.cos((i / nodes.length) * Math.PI * 2) * (100 + n.depth * 60),
+    y: 80 + n.depth * 150 + (Math.random() - 0.5) * 40,
+    vx: 0,
+    vy: 0,
+  }));
+
+  const nodeMap = new Map(result.map(n => [n.id, n]));
+  const ITERATIONS = 120;
+
+  for (let iter = 0; iter < ITERATIONS; iter++) {
+    const alpha = 1 - iter / ITERATIONS;
+    const decay = alpha * 0.8;
+
+    // Repulsion between all nodes
+    for (let i = 0; i < result.length; i++) {
+      for (let j = i + 1; j < result.length; j++) {
+        const a = result[i], b = result[j];
+        let dx = b.x - a.x;
+        let dy = b.y - a.y;
+        let dist = Math.sqrt(dx * dx + dy * dy) || 1;
+        const minDist = getRadius(a.depth) + getRadius(b.depth) + 50;
+        if (dist < minDist) {
+          const force = ((minDist - dist) / dist) * decay * 0.5;
+          const fx = dx * force, fy = dy * force;
+          a.vx -= fx; a.vy -= fy;
+          b.vx += fx; b.vy += fy;
+        }
+        // Charge repulsion
+        const charge = -200 * decay / (dist * dist + 100);
+        a.vx -= dx * charge / dist;
+        a.vy -= dy * charge / dist;
+        b.vx += dx * charge / dist;
+        b.vy += dy * charge / dist;
+      }
+    }
+
+    // Link attraction
+    for (const link of links) {
+      const s = nodeMap.get(link.sourceId);
+      const t = nodeMap.get(link.targetId);
+      if (!s || !t) continue;
+      let dx = t.x - s.x;
+      let dy = t.y - s.y;
+      let dist = Math.sqrt(dx * dx + dy * dy) || 1;
+      const targetDist = s.depth === 0 ? 120 : 80;
+      const force = (dist - targetDist) * decay * 0.01;
+      const fx = (dx / dist) * force, fy = (dy / dist) * force;
+      s.vx += fx; s.vy += fy;
+      t.vx -= fx; t.vy -= fy;
+    }
+
+    // Center gravity
+    for (const n of result) {
+      n.vx += (width / 2 - n.x) * decay * 0.002;
+      // Pull to depth layer
+      const targetY = 80 + n.depth * 150;
+      n.vy += (targetY - n.y) * decay * 0.02;
+    }
+
+    // Apply velocity with damping
+    for (const n of result) {
+      n.vx *= 0.6;
+      n.vy *= 0.6;
+      n.x += n.vx;
+      n.y += n.vy;
+      // Clamp to bounds
+      n.x = Math.max(40, Math.min(width - 40, n.x));
+      n.y = Math.max(30, Math.min(height - 30, n.y));
+    }
+  }
+
+  return result;
+}
+
 export default function DependencyGraph({ tree }: { tree: DependencyTreeNode[] }) {
-  const svgRef = useRef<SVGSVGElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [hoveredNode, setHoveredNode] = useState<string | null>(null);
   const [selectedNode, setSelectedNode] = useState<string | null>(null);
-  const [dimensions, setDimensions] = useState({ width: 900, height: 600 });
-  const simRef = useRef<d3.Simulation<SimNode, SimLink> | null>(null);
+  const [containerWidth, setContainerWidth] = useState(900);
+  const [zoom, setZoom] = useState(1);
+  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const [isPanning, setIsPanning] = useState(false);
+  const panStart = useRef({ x: 0, y: 0, px: 0, py: 0 });
 
-  const { nodes: rawNodes, links: rawLinks } = useMemo(() => flatten(tree), [tree]);
-
-  // Build adjacency set for highlighting
-  const adjacency = useMemo(() => {
-    const adj = new Map<string, Set<string>>();
-    rawLinks.forEach(l => {
-      const s = typeof l.source === 'string' ? l.source : l.source.id;
-      const t = typeof l.target === 'string' ? l.target : l.target.id;
-      if (!adj.has(s)) adj.set(s, new Set());
-      if (!adj.has(t)) adj.set(t, new Set());
-      adj.get(s)!.add(t);
-      adj.get(t)!.add(s);
-    });
-    return adj;
-  }, [rawLinks]);
+  const { nodes: rawNodes, links } = useMemo(() => flatten(tree), [tree]);
 
   useEffect(() => {
     if (!containerRef.current) return;
     const obs = new ResizeObserver(entries => {
-      const { width } = entries[0].contentRect;
-      setDimensions({ width, height: 600 });
+      setContainerWidth(entries[0].contentRect.width);
     });
     obs.observe(containerRef.current);
     return () => obs.disconnect();
   }, []);
 
-  useEffect(() => {
-    if (!svgRef.current || rawNodes.length === 0) return;
+  const width = Math.max(containerWidth, 800);
+  const maxDepth = rawNodes.reduce((m, n) => Math.max(m, n.depth), 0);
+  const height = Math.max(500, (maxDepth + 1) * 150 + 120);
 
-    const { width, height } = dimensions;
-    const svg = d3.select(svgRef.current);
+  const nodes = useMemo(
+    () => runLayout(rawNodes, links, width, height),
+    [rawNodes, links, width, height]
+  );
 
-    // Clone nodes/links for simulation
-    const simNodes: SimNode[] = rawNodes.map(n => ({ ...n }));
-    const simLinks: SimLink[] = rawLinks.map(l => ({
-      source: typeof l.source === 'string' ? l.source : l.source.id,
-      target: typeof l.target === 'string' ? l.target : l.target.id,
-    }));
+  const nodeMap = useMemo(() => new Map(nodes.map(n => [n.id, n])), [nodes]);
 
-    // Clear previous
-    svg.selectAll('*').remove();
-
-    // Defs for glow filters
-    const defs = svg.append('defs');
-
-    // Grid pattern
-    const pattern = defs.append('pattern')
-      .attr('id', 'forcegrid')
-      .attr('width', 60).attr('height', 60)
-      .attr('patternUnits', 'userSpaceOnUse');
-    pattern.append('path')
-      .attr('d', 'M 60 0 L 0 0 0 60')
-      .attr('fill', 'none')
-      .attr('stroke', 'rgba(125,211,252,0.03)')
-      .attr('stroke-width', 0.5);
-
-    // Glow filters
-    Object.entries(COLORS).forEach(([level, color]) => {
-      const filter = defs.append('filter')
-        .attr('id', `nodeglow-${level}`)
-        .attr('x', '-100%').attr('y', '-100%')
-        .attr('width', '300%').attr('height', '300%');
-      filter.append('feGaussianBlur').attr('stdDeviation', '6').attr('result', 'blur');
-      filter.append('feFlood').attr('flood-color', color).attr('flood-opacity', 0.3);
-      filter.append('feComposite').attr('in2', 'blur').attr('operator', 'in');
-      const merge = filter.append('feMerge');
-      merge.append('feMergeNode');
-      merge.append('feMergeNode').attr('in', 'SourceGraphic');
+  const adjacency = useMemo(() => {
+    const adj = new Map<string, Set<string>>();
+    links.forEach(l => {
+      if (!adj.has(l.sourceId)) adj.set(l.sourceId, new Set());
+      if (!adj.has(l.targetId)) adj.set(l.targetId, new Set());
+      adj.get(l.sourceId)!.add(l.targetId);
+      adj.get(l.targetId)!.add(l.sourceId);
     });
+    return adj;
+  }, [links]);
 
-    svg.append('rect').attr('width', width).attr('height', height).attr('fill', 'url(#forcegrid)');
+  const isRelated = (id: string) => {
+    if (!hoveredNode) return true;
+    if (id === hoveredNode) return true;
+    return adjacency.get(hoveredNode)?.has(id) || false;
+  };
 
-    const g = svg.append('g');
+  const isLinkActive = (s: string, t: string) => {
+    if (!hoveredNode) return false;
+    return hoveredNode === s || hoveredNode === t;
+  };
 
-    // Zoom behavior
-    const zoom = d3.zoom<SVGSVGElement, unknown>()
-      .scaleExtent([0.3, 3])
-      .on('zoom', (event) => g.attr('transform', event.transform));
-    svg.call(zoom);
-    svg.call(zoom.transform, d3.zoomIdentity.translate(width / 2, height / 2).scale(0.85).translate(-width / 2, -height / 2));
+  // Pan & zoom
+  const handleWheel = (e: React.WheelEvent) => {
+    e.preventDefault();
+    setZoom(z => Math.min(2.5, Math.max(0.3, z + (e.deltaY > 0 ? -0.08 : 0.08))));
+  };
 
-    // Force simulation
-    const sim = d3.forceSimulation(simNodes)
-      .force('link', d3.forceLink<SimNode, SimLink>(simLinks).id(d => d.id).distance(d => {
-        const s = d.source as SimNode;
-        return s.depth === 0 ? 120 : 80;
-      }).strength(0.6))
-      .force('charge', d3.forceManyBody().strength(d => (d as SimNode).depth === 0 ? -400 : -200))
-      .force('center', d3.forceCenter(width / 2, height / 2).strength(0.05))
-      .force('collision', d3.forceCollide().radius(d => getRadius(d as SimNode) + 20))
-      .force('y', d3.forceY<SimNode>().y(d => 100 + d.depth * 160).strength(0.15))
-      .force('x', d3.forceX(width / 2).strength(0.02));
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (e.button !== 0) return;
+    setIsPanning(true);
+    panStart.current = { x: e.clientX, y: e.clientY, px: pan.x, py: pan.y };
+  };
 
-    simRef.current = sim;
-
-    // Links
-    const linkGroup = g.append('g');
-    const linkSelection = linkGroup.selectAll('path')
-      .data(simLinks)
-      .join('path')
-      .attr('fill', 'none')
-      .attr('stroke', 'rgba(125,211,252,0.08)')
-      .attr('stroke-width', 1);
-
-    // Node groups
-    const nodeGroup = g.append('g');
-    const nodeSelection = nodeGroup.selectAll<SVGGElement, SimNode>('g')
-      .data(simNodes, d => d.id)
-      .join('g')
-      .attr('cursor', 'pointer')
-      .call(d3.drag<SVGGElement, SimNode>()
-        .on('start', (event, d) => {
-          if (!event.active) sim.alphaTarget(0.3).restart();
-          d.fx = d.x;
-          d.fy = d.y;
-        })
-        .on('drag', (event, d) => {
-          d.fx = event.x;
-          d.fy = event.y;
-        })
-        .on('end', (event, d) => {
-          if (!event.active) sim.alphaTarget(0);
-          d.fx = null;
-          d.fy = null;
-        })
-      );
-
-    // Node background glow
-    nodeSelection.append('circle')
-      .attr('r', d => getRadius(d) + 10)
-      .attr('fill', d => GLOW[d.riskLevel])
-      .attr('opacity', d => (d.riskLevel === 'high' || d.riskLevel === 'critical') ? 0.5 : 0);
-
-    // Node circle
-    nodeSelection.append('circle')
-      .attr('r', d => getRadius(d))
-      .attr('fill', 'var(--elevated)')
-      .attr('stroke', d => COLORS[d.riskLevel])
-      .attr('stroke-width', 1.5);
-
-    // Score text
-    nodeSelection.append('text')
-      .attr('text-anchor', 'middle')
-      .attr('dominant-baseline', 'central')
-      .attr('fill', d => COLORS[d.riskLevel])
-      .attr('font-size', d => d.depth === 0 ? 12 : 10)
-      .attr('font-family', "'JetBrains Mono', monospace")
-      .attr('font-weight', '600')
-      .text(d => d.score);
-
-    // Name label
-    nodeSelection.append('text')
-      .attr('text-anchor', 'middle')
-      .attr('y', d => getRadius(d) + 14)
-      .attr('fill', 'var(--text-2)')
-      .attr('font-size', d => d.depth === 0 ? 10 : 8)
-      .attr('font-family', "'JetBrains Mono', monospace")
-      .attr('font-weight', '400')
-      .text(d => d.name.length > 16 ? d.name.slice(0, 14) + '\u2026' : d.name);
-
-    // Child count badge for root nodes
-    nodeSelection.filter(d => d.depth === 0 && d.childCount > 0).each(function(d) {
-      const g = d3.select(this);
-      const r = getRadius(d);
-      g.append('circle')
-        .attr('cx', r - 3).attr('cy', -r + 3).attr('r', 8)
-        .attr('fill', 'var(--panel)').attr('stroke', 'var(--border-2)').attr('stroke-width', 1);
-      g.append('text')
-        .attr('x', r - 3).attr('y', -r + 4)
-        .attr('text-anchor', 'middle').attr('dominant-baseline', 'central')
-        .attr('fill', 'var(--text-3)')
-        .attr('font-size', 8).attr('font-family', "'JetBrains Mono', monospace").attr('font-weight', 600)
-        .text(d.childCount);
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isPanning) return;
+    setPan({
+      x: panStart.current.px + (e.clientX - panStart.current.x),
+      y: panStart.current.py + (e.clientY - panStart.current.y),
     });
+  };
 
-    // Hover/click interactions on nodeSelection
-    nodeSelection
-      .on('mouseenter', function(_, d) {
-        setHoveredNode(d.id);
-        d3.select(this).select('circle:nth-child(2)')
-          .transition().duration(200)
-          .attr('stroke-width', 3);
-      })
-      .on('mouseleave', function() {
-        setHoveredNode(null);
-        d3.select(this).select('circle:nth-child(2)')
-          .transition().duration(200)
-          .attr('stroke-width', 1.5);
-      })
-      .on('click', (_, d) => {
-        setSelectedNode(prev => prev === d.id ? null : d.id);
-      });
+  const handleMouseUp = () => setIsPanning(false);
 
-    // Tick function
-    sim.on('tick', () => {
-      linkSelection.attr('d', d => {
-        const s = d.source as SimNode;
-        const t = d.target as SimNode;
-        const dx = (t.x || 0) - (s.x || 0);
-        const dy = (t.y || 0) - (s.y || 0);
-        const dr = Math.sqrt(dx * dx + dy * dy) * 1.5;
-        return `M${s.x},${s.y}A${dr},${dr} 0 0,1 ${t.x},${t.y}`;
-      });
-      nodeSelection.attr('transform', d => `translate(${d.x},${d.y})`);
-    });
-
-    // Entrance animation — start with alpha burst
-    sim.alpha(1).restart();
-
-    return () => { sim.stop(); };
-  }, [rawNodes, rawLinks, dimensions]);
-
-  // Update link/node opacity on hover
-  useEffect(() => {
-    if (!svgRef.current) return;
-    const svg = d3.select(svgRef.current);
-
-    svg.selectAll<SVGPathElement, SimLink>('path')
-      .transition().duration(200)
-      .attr('stroke', d => {
-        if (!hoveredNode) return 'rgba(125,211,252,0.08)';
-        const s = typeof d.source === 'string' ? d.source : (d.source as SimNode).id;
-        const t = typeof d.target === 'string' ? d.target : (d.target as SimNode).id;
-        if (s === hoveredNode || t === hoveredNode) {
-          const targetNode = rawNodes.find(n => n.id === t);
-          return targetNode ? COLORS[targetNode.riskLevel] : 'var(--cyan-1)';
-        }
-        return 'rgba(125,211,252,0.02)';
-      })
-      .attr('stroke-width', d => {
-        if (!hoveredNode) return 1;
-        const s = typeof d.source === 'string' ? d.source : (d.source as SimNode).id;
-        const t = typeof d.target === 'string' ? d.target : (d.target as SimNode).id;
-        return (s === hoveredNode || t === hoveredNode) ? 2 : 0.5;
-      })
-      .attr('opacity', d => {
-        if (!hoveredNode) return 1;
-        const s = typeof d.source === 'string' ? d.source : (d.source as SimNode).id;
-        const t = typeof d.target === 'string' ? d.target : (d.target as SimNode).id;
-        return (s === hoveredNode || t === hoveredNode) ? 0.7 : 0.1;
-      });
-
-    svg.selectAll<SVGGElement, SimNode>('g > g')
-      .transition().duration(200)
-      .attr('opacity', d => {
-        if (!hoveredNode) return 1;
-        if (d.id === hoveredNode) return 1;
-        return adjacency.get(hoveredNode)?.has(d.id) ? 0.9 : 0.15;
-      });
-  }, [hoveredNode, rawNodes, adjacency]);
-
-  const selectedData = selectedNode ? rawNodes.find(n => n.id === selectedNode) : null;
+  const selectedData = selectedNode ? nodeMap.get(selectedNode) : null;
 
   return (
     <div className="glass-lg shine-top overflow-hidden">
@@ -333,7 +248,7 @@ export default function DependencyGraph({ tree }: { tree: DependencyTreeNode[] }
         <div className="flex items-center gap-3">
           <h3 className="label" style={{ fontSize: 11 }}>Dependency Graph</h3>
           <span className="mono text-[10px]" style={{ color: 'var(--text-ghost)' }}>
-            drag to rearrange &bull; scroll to zoom
+            drag to pan &bull; scroll to zoom
           </span>
         </div>
         <div className="flex items-center gap-4">
@@ -343,21 +258,160 @@ export default function DependencyGraph({ tree }: { tree: DependencyTreeNode[] }
               <span className="mono text-[9px] uppercase" style={{ color: 'var(--text-3)' }}>{level}</span>
             </div>
           ))}
+          <div className="flex items-center gap-1 ml-2 pl-3" style={{ borderLeft: '1px solid var(--border-1)' }}>
+            <button
+              onClick={() => setZoom(z => Math.min(2.5, z + 0.15))}
+              className="w-6 h-6 rounded flex items-center justify-center mono text-xs"
+              style={{ background: 'var(--surface)', color: 'var(--text-2)', border: '1px solid var(--border-1)' }}
+            >+</button>
+            <span className="mono text-[9px] w-9 text-center" style={{ color: 'var(--text-3)' }}>{Math.round(zoom * 100)}%</span>
+            <button
+              onClick={() => setZoom(z => Math.max(0.3, z - 0.15))}
+              className="w-6 h-6 rounded flex items-center justify-center mono text-xs"
+              style={{ background: 'var(--surface)', color: 'var(--text-2)', border: '1px solid var(--border-1)' }}
+            >-</button>
+            <button
+              onClick={() => { setZoom(1); setPan({ x: 0, y: 0 }); }}
+              className="ml-1 px-2 h-6 rounded mono text-[9px]"
+              style={{ background: 'var(--surface)', color: 'var(--text-3)', border: '1px solid var(--border-1)' }}
+            >Reset</button>
+          </div>
         </div>
       </div>
 
       <div className="flex">
+        {/* Canvas */}
         <div
           ref={containerRef}
-          className="flex-1 relative"
-          style={{ background: 'var(--abyss)', height: 600 }}
+          className="flex-1 relative overflow-hidden"
+          style={{ background: 'var(--abyss)', height: Math.min(height * zoom + 40, 650), cursor: isPanning ? 'grabbing' : 'grab' }}
+          onWheel={handleWheel}
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          onMouseLeave={handleMouseUp}
         >
           <svg
-            ref={svgRef}
-            width={dimensions.width}
-            height={dimensions.height}
+            width={width}
+            height={height}
+            viewBox={`0 0 ${width} ${height}`}
             className="block"
-          />
+            style={{
+              transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
+              transformOrigin: 'top left',
+              transition: isPanning ? 'none' : 'transform 0.15s ease-out',
+            }}
+          >
+            {/* Grid */}
+            <defs>
+              <pattern id="gg" width="60" height="60" patternUnits="userSpaceOnUse">
+                <path d="M 60 0 L 0 0 0 60" fill="none" stroke="rgba(125,211,252,0.025)" strokeWidth="0.5" />
+              </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#gg)" />
+
+            {/* Links — curved bezier */}
+            {links.map((link, i) => {
+              const s = nodeMap.get(link.sourceId);
+              const t = nodeMap.get(link.targetId);
+              if (!s || !t) return null;
+
+              const active = isLinkActive(link.sourceId, link.targetId);
+              const visible = hoveredNode ? active : true;
+
+              const sy = s.y + getRadius(s.depth);
+              const ty = t.y - getRadius(t.depth);
+              const midY = (sy + ty) / 2;
+
+              return (
+                <motion.path
+                  key={`${link.sourceId}-${link.targetId}-${i}`}
+                  d={`M ${s.x} ${sy} C ${s.x} ${midY}, ${t.x} ${midY}, ${t.x} ${ty}`}
+                  fill="none"
+                  stroke={active ? COLORS[t.riskLevel] : 'rgba(125,211,252,0.06)'}
+                  strokeWidth={active ? 2 : 1}
+                  opacity={visible ? (active ? 0.7 : 0.4) : 0.05}
+                  initial={{ pathLength: 0, opacity: 0 }}
+                  animate={{ pathLength: 1, opacity: visible ? (active ? 0.7 : 0.4) : 0.05 }}
+                  transition={{ pathLength: { duration: 0.8, delay: i * 0.02 }, opacity: { duration: 0.2 } }}
+                />
+              );
+            })}
+
+            {/* Nodes */}
+            {nodes.map((node, i) => {
+              const color = COLORS[node.riskLevel];
+              const r = getRadius(node.depth);
+              const related = isRelated(node.id);
+              const isHovered = hoveredNode === node.id;
+              const isSelected = selectedNode === node.id;
+
+              return (
+                <motion.g
+                  key={node.id}
+                  initial={{ opacity: 0, scale: 0 }}
+                  animate={{ opacity: related ? 1 : 0.12, scale: 1 }}
+                  transition={{ opacity: { duration: 0.2 }, scale: { duration: 0.4, delay: i * 0.02, type: 'spring', stiffness: 300, damping: 25 } }}
+                  style={{ transformOrigin: `${node.x}px ${node.y}px` }}
+                  onMouseEnter={() => setHoveredNode(node.id)}
+                  onMouseLeave={() => setHoveredNode(null)}
+                  onClick={() => setSelectedNode(isSelected ? null : node.id)}
+                  className="cursor-pointer"
+                >
+                  {/* Glow for risky nodes */}
+                  {(node.riskLevel === 'high' || node.riskLevel === 'critical') && (
+                    <circle cx={node.x} cy={node.y} r={r + 10} fill="none" stroke={GLOW[node.riskLevel]} strokeWidth={6} opacity={isHovered ? 0.8 : 0.4} />
+                  )}
+
+                  {/* Selection ring */}
+                  {isSelected && (
+                    <circle cx={node.x} cy={node.y} r={r + 6} fill="none" stroke="var(--cyan-1)" strokeWidth={1.5} strokeDasharray="4 3" />
+                  )}
+
+                  {/* Body */}
+                  <circle cx={node.x} cy={node.y} r={r} fill="var(--elevated)" stroke={color} strokeWidth={isHovered || isSelected ? 2.5 : 1.5} />
+
+                  {/* Score */}
+                  <text
+                    x={node.x} y={node.y + 1}
+                    textAnchor="middle" dominantBaseline="central"
+                    fill={color}
+                    fontSize={node.depth === 0 ? 12 : node.depth === 1 ? 10 : 8}
+                    fontFamily="'JetBrains Mono', monospace" fontWeight="600"
+                  >
+                    {node.score}
+                  </text>
+
+                  {/* Label */}
+                  {(node.depth <= 1 || isHovered) && (
+                    <text
+                      x={node.x} y={node.y + r + 13}
+                      textAnchor="middle"
+                      fill={isHovered ? 'var(--text-1)' : 'var(--text-2)'}
+                      fontSize={node.depth === 0 ? 10 : 8}
+                      fontFamily="'JetBrains Mono', monospace"
+                    >
+                      {node.name.length > 18 ? node.name.slice(0, 16) + '\u2026' : node.name}
+                    </text>
+                  )}
+
+                  {/* Child count badge */}
+                  {node.depth === 0 && node.childCount > 0 && (
+                    <>
+                      <circle cx={node.x + r - 3} cy={node.y - r + 3} r={7} fill="var(--panel)" stroke="var(--border-2)" strokeWidth={1} />
+                      <text
+                        x={node.x + r - 3} y={node.y - r + 4}
+                        textAnchor="middle" dominantBaseline="central"
+                        fill="var(--text-3)" fontSize="7" fontFamily="'JetBrains Mono', monospace" fontWeight="600"
+                      >
+                        {node.childCount}
+                      </text>
+                    </>
+                  )}
+                </motion.g>
+              );
+            })}
+          </svg>
         </div>
 
         {/* Detail sidebar */}
@@ -367,7 +421,7 @@ export default function DependencyGraph({ tree }: { tree: DependencyTreeNode[] }
               initial={{ width: 0, opacity: 0 }}
               animate={{ width: 260, opacity: 1 }}
               exit={{ width: 0, opacity: 0 }}
-              transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
+              transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] as const }}
               className="overflow-hidden border-l flex-shrink-0"
               style={{ background: 'var(--elevated)', borderColor: 'var(--border-1)' }}
             >
@@ -376,24 +430,15 @@ export default function DependencyGraph({ tree }: { tree: DependencyTreeNode[] }
                   <span className="label">Node Detail</span>
                   <button onClick={() => setSelectedNode(null)} className="mono text-xs" style={{ color: 'var(--text-3)' }}>&times;</button>
                 </div>
-
                 <div className="mb-5">
-                  <div className="mono text-sm font-semibold mb-2" style={{ color: 'var(--text-1)' }}>
-                    {selectedData.name}
-                  </div>
+                  <div className="mono text-sm font-semibold mb-2" style={{ color: 'var(--text-1)' }}>{selectedData.name}</div>
                   <div className="flex items-center gap-3">
-                    <span
-                      className="inline-flex items-center px-2 py-0.5 rounded-md mono text-[10px] font-semibold uppercase border"
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-md mono text-[10px] font-semibold uppercase border"
                       style={{ color: COLORS[selectedData.riskLevel], borderColor: COLORS[selectedData.riskLevel], background: GLOW[selectedData.riskLevel] }}
-                    >
-                      {selectedData.riskLevel}
-                    </span>
-                    <span className="mono text-xl font-bold" style={{ color: COLORS[selectedData.riskLevel] }}>
-                      {selectedData.score}
-                    </span>
+                    >{selectedData.riskLevel}</span>
+                    <span className="mono text-xl font-bold" style={{ color: COLORS[selectedData.riskLevel] }}>{selectedData.score}</span>
                   </div>
                 </div>
-
                 <dl className="space-y-3">
                   {[
                     { label: 'Depth', value: `Level ${selectedData.depth}` },
@@ -406,13 +451,12 @@ export default function DependencyGraph({ tree }: { tree: DependencyTreeNode[] }
                     </div>
                   ))}
                 </dl>
-
                 {adjacency.get(selectedData.id) && (
                   <div className="mt-5 pt-5 border-t" style={{ borderColor: 'var(--border-1)' }}>
                     <span className="label">Connected</span>
                     <div className="mt-3 space-y-1 max-h-52 overflow-y-auto">
                       {Array.from(adjacency.get(selectedData.id) || []).map(id => {
-                        const n = rawNodes.find(nn => nn.id === id);
+                        const n = nodeMap.get(id);
                         if (!n) return null;
                         return (
                           <button
@@ -438,10 +482,4 @@ export default function DependencyGraph({ tree }: { tree: DependencyTreeNode[] }
       </div>
     </div>
   );
-}
-
-function getRadius(d: SimNode): number {
-  if (d.depth === 0) return 24;
-  if (d.depth === 1) return 18;
-  return 13;
 }
