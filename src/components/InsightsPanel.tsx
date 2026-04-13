@@ -18,7 +18,7 @@ export default function InsightsPanel({ insights, loading }: { insights: AIInsig
         <div className="flex items-center gap-3">
           <h3 className="label" style={{ fontSize: 11 }}>AI Insights</h3>
           <span className="mono text-[9px] px-2 py-0.5 rounded-md" style={{ background: 'var(--cyan-3)', color: 'var(--cyan-1)', border: '1px solid rgba(34,211,238,0.15)' }}>
-            GEMMA 3
+            LLAMA 3.3
           </span>
         </div>
         {loading && (

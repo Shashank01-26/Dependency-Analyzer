@@ -12,7 +12,7 @@ const BOOT_LINES = [
   { text: 'Initializing risk engine...', delay: 200 },
   { text: 'Loading vulnerability database...', delay: 500 },
   { text: 'Connecting to npm registry...', delay: 900 },
-  { text: 'AI model: Gemma 3 27B [READY]', delay: 1300 },
+  { text: 'AI model: Llama 3.3 70B [READY]', delay: 1300 },
   { text: 'All systems operational.', delay: 1700 },
 ];
 
