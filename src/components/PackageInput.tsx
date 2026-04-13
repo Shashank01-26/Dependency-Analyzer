@@ -13,21 +13,21 @@ const SAMPLE_RISKY = JSON.stringify({
   name: "legacy-monolith",
   version: "1.0.0",
   dependencies: {
-    "request": "^2.88.2",          // DEPRECATED since Feb 2020, massive dep tree
-    "jade": "^1.11.0",             // DEPRECATED, renamed to pug years ago
-    "node-uuid": "^1.4.8",         // DEPRECATED, replaced by uuid
-    "coffee-script": "^1.12.7",    // DEPRECATED, abandoned
-    "nomnom": "^1.8.1",            // Abandoned since 2014, no maintainers
-    "dominux": "^1.0.0",           // Tiny unmaintained package, near-zero downloads
-    "gulp": "^3.9.1",              // Very old major version, known vulns
-    "bower": "^1.8.14",            // DEPRECATED, entire tool is abandoned
-    "formidable": "^1.2.6",        // Old major with known vulns
-    "minimist": "^0.2.4"           // Old version range with prototype pollution CVEs
+    "request": "^2.88.2",
+    "jade": "^1.11.0",
+    "node-uuid": "^1.4.8",
+    "coffee-script": "^1.12.7",
+    "nomnom": "^1.8.1",
+    "dominux": "^1.0.0",
+    "gulp": "^3.9.1",
+    "bower": "^1.8.14",
+    "formidable": "^1.2.6",
+    "minimist": "^0.2.4"
   },
   devDependencies: {
-    "istanbul": "^0.4.5",          // DEPRECATED, replaced by nyc/c8
-    "grunt": "^1.6.1",             // Near-abandoned, very low activity
-    "sails": "^1.5.0"              // Declining maintenance, large dep tree
+    "istanbul": "^0.4.5",
+    "grunt": "^1.6.1",
+    "sails": "^1.5.0"
   }
 }, null, 2);
 
@@ -36,18 +36,18 @@ const SAMPLE_SAFE = JSON.stringify({
   name: "modern-stack",
   version: "1.0.0",
   dependencies: {
-    "next": "^14.2.0",             // Vercel-backed, weekly releases, huge community
-    "react": "^18.3.0",            // Meta-backed, massive ecosystem
-    "react-dom": "^18.3.0",        // Same as react
-    "zod": "^3.23.0",              // Very active, single-purpose, zero deps
-    "drizzle-orm": "^0.30.0",      // Fast-growing, frequent releases
-    "@tanstack/react-query": "^5.50.0" // Very popular, active, well-maintained
+    "next": "^14.2.0",
+    "react": "^18.3.0",
+    "react-dom": "^18.3.0",
+    "zod": "^3.23.0",
+    "drizzle-orm": "^0.30.0",
+    "@tanstack/react-query": "^5.50.0"
   },
   devDependencies: {
-    "typescript": "^5.5.0",        // Microsoft-backed, monthly releases
-    "eslint": "^9.0.0",            // Huge community, active
-    "vitest": "^2.0.0",            // Very active, modern, fast releases
-    "prettier": "^3.3.0"           // Widely adopted, stable, regular updates
+    "typescript": "^5.5.0",
+    "eslint": "^9.0.0",
+    "vitest": "^2.0.0",
+    "prettier": "^3.3.0"
   }
 }, null, 2);
 
@@ -75,9 +75,7 @@ export default function PackageInput({ onSubmit, loading }: PackageInputProps) {
   }, []);
 
   const handleSubmit = () => {
-    if (validate(text)) {
-      onSubmit(text);
-    }
+    if (validate(text)) onSubmit(text);
   };
 
   const handleFile = (file: File) => {
@@ -85,9 +83,7 @@ export default function PackageInput({ onSubmit, loading }: PackageInputProps) {
     reader.onload = (e) => {
       const content = e.target?.result as string;
       setText(content);
-      if (validate(content)) {
-        onSubmit(content);
-      }
+      if (validate(content)) onSubmit(content);
     };
     reader.readAsText(file);
   };
@@ -106,25 +102,23 @@ export default function PackageInput({ onSubmit, loading }: PackageInputProps) {
   };
 
   return (
-    <div className="panel overflow-hidden">
+    <div className="glass-lg shine-top overflow-hidden">
       {/* Tab bar */}
-      <div className="flex border-b" style={{ borderColor: 'var(--border-dim)' }}>
+      <div className="flex border-b" style={{ borderColor: 'var(--border-1)' }}>
         {(['paste', 'upload'] as const).map(m => (
           <button
             key={m}
             onClick={() => setMode(m)}
-            className="px-5 py-3 text-xs font-mono uppercase tracking-wider transition-colors relative"
-            style={{
-              color: mode === m ? 'var(--cyan-solid)' : 'var(--text-tertiary)',
-              background: mode === m ? 'var(--bg-surface)' : 'transparent',
-            }}
+            className="px-6 py-3.5 mono text-[11px] uppercase tracking-[0.15em] transition-all relative"
+            style={{ color: mode === m ? 'var(--cyan-1)' : 'var(--text-3)' }}
           >
             {m === 'paste' ? 'Paste JSON' : 'Upload File'}
             {mode === m && (
               <motion.div
-                layoutId="input-tab"
+                layoutId="input-tab-indicator"
                 className="absolute bottom-0 left-0 right-0 h-[2px]"
-                style={{ background: 'var(--cyan-solid)' }}
+                style={{ background: 'linear-gradient(90deg, var(--cyan-1), var(--cyan-2))' }}
+                transition={{ type: 'spring', stiffness: 400, damping: 35 }}
               />
             )}
           </button>
@@ -135,70 +129,69 @@ export default function PackageInput({ onSubmit, loading }: PackageInputProps) {
         <div className="relative">
           <button
             onClick={() => setSampleMenuOpen(!sampleMenuOpen)}
-            className="px-4 py-3 text-[11px] font-mono uppercase tracking-wider transition-colors flex items-center gap-1.5"
-            style={{ color: 'var(--text-tertiary)' }}
+            className="px-5 py-3.5 mono text-[10px] uppercase tracking-[0.15em] transition-colors flex items-center gap-2"
+            style={{ color: 'var(--text-3)' }}
           >
             Load Sample
-            <span className="text-[9px]">{sampleMenuOpen ? '\u25b2' : '\u25bc'}</span>
+            <motion.span
+              animate={{ rotate: sampleMenuOpen ? 180 : 0 }}
+              transition={{ duration: 0.2 }}
+              className="text-[8px]"
+            >
+              &#9660;
+            </motion.span>
           </button>
           <AnimatePresence>
             {sampleMenuOpen && (
               <>
-                {/* Backdrop to close menu */}
                 <div className="fixed inset-0 z-10" onClick={() => setSampleMenuOpen(false)} />
                 <motion.div
-                  initial={{ opacity: 0, y: -4, scale: 0.95 }}
+                  initial={{ opacity: 0, y: -8, scale: 0.95 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: -4, scale: 0.95 }}
-                  transition={{ duration: 0.15 }}
-                  className="absolute right-0 top-full mt-1 z-20 rounded-lg overflow-hidden"
+                  exit={{ opacity: 0, y: -8, scale: 0.95 }}
+                  transition={{ duration: 0.2, ease: [0.25, 0.1, 0.25, 1] }}
+                  className="absolute right-0 top-full mt-2 z-20 glass rounded-xl overflow-hidden"
                   style={{
-                    background: 'var(--bg-elevated)',
-                    border: '1px solid var(--border-subtle)',
-                    boxShadow: '0 12px 40px rgba(0,0,0,0.5)',
-                    minWidth: 220,
+                    minWidth: 260,
+                    boxShadow: '0 20px 60px rgba(0,0,0,0.6), 0 0 40px rgba(34,211,238,0.03)',
                   }}
                 >
                   <button
                     onClick={() => loadSample('risky')}
-                    className="w-full px-4 py-3 flex items-start gap-3 text-left transition-colors"
-                    style={{ borderBottom: '1px solid var(--border-dim)' }}
-                    onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-hover)')}
-                    onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                    className="w-full px-5 py-4 flex items-start gap-3 text-left transition-all group"
+                    style={{ borderBottom: '1px solid var(--border-1)' }}
                   >
                     <span
-                      className="mt-0.5 w-5 h-5 rounded flex items-center justify-center text-[10px] font-mono font-bold flex-shrink-0"
-                      style={{ background: 'var(--red-dim)', color: 'var(--red-solid)', border: '1px solid var(--red-muted)' }}
+                      className="mt-0.5 w-6 h-6 rounded-lg flex items-center justify-center mono text-[10px] font-bold flex-shrink-0 transition-transform group-hover:scale-110"
+                      style={{ background: 'var(--red-3)', color: 'var(--red-1)', border: '1px solid rgba(248,113,113,0.2)' }}
                     >
                       !
                     </span>
                     <div>
-                      <div className="text-xs font-mono font-medium" style={{ color: 'var(--text-primary)' }}>
+                      <div className="text-xs font-medium group-hover:text-[var(--text-1)] transition-colors" style={{ color: 'var(--text-2)', fontFamily: 'var(--font-body)' }}>
                         High Risk Legacy Project
                       </div>
-                      <div className="text-[10px] font-mono mt-0.5 leading-relaxed" style={{ color: 'var(--text-tertiary)' }}>
-                        13 deps — deprecated, abandoned, CVEs
+                      <div className="mono text-[10px] mt-0.5" style={{ color: 'var(--text-3)' }}>
+                        13 deps &mdash; deprecated, abandoned, CVEs
                       </div>
                     </div>
                   </button>
                   <button
                     onClick={() => loadSample('safe')}
-                    className="w-full px-4 py-3 flex items-start gap-3 text-left transition-colors"
-                    onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-hover)')}
-                    onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                    className="w-full px-5 py-4 flex items-start gap-3 text-left transition-all group"
                   >
                     <span
-                      className="mt-0.5 w-5 h-5 rounded flex items-center justify-center text-[10px] font-mono font-bold flex-shrink-0"
-                      style={{ background: 'var(--green-dim)', color: 'var(--green-solid)', border: '1px solid var(--green-muted)' }}
+                      className="mt-0.5 w-6 h-6 rounded-lg flex items-center justify-center mono text-[10px] font-bold flex-shrink-0 transition-transform group-hover:scale-110"
+                      style={{ background: 'var(--green-3)', color: 'var(--green-1)', border: '1px solid rgba(74,222,128,0.2)' }}
                     >
                       &#10003;
                     </span>
                     <div>
-                      <div className="text-xs font-mono font-medium" style={{ color: 'var(--text-primary)' }}>
+                      <div className="text-xs font-medium group-hover:text-[var(--text-1)] transition-colors" style={{ color: 'var(--text-2)', fontFamily: 'var(--font-body)' }}>
                         Low Risk Modern Stack
                       </div>
-                      <div className="text-[10px] font-mono mt-0.5 leading-relaxed" style={{ color: 'var(--text-tertiary)' }}>
-                        10 deps — active, backed, zero-day safe
+                      <div className="mono text-[10px] mt-0.5" style={{ color: 'var(--text-3)' }}>
+                        10 deps &mdash; backed, active, zero-day safe
                       </div>
                     </div>
                   </button>
@@ -209,51 +202,57 @@ export default function PackageInput({ onSubmit, loading }: PackageInputProps) {
         </div>
       </div>
 
-      <div className="p-5">
+      <div className="p-6">
         <AnimatePresence mode="wait">
           {mode === 'paste' ? (
             <motion.div
               key="paste"
-              initial={{ opacity: 0, y: 5 }}
+              initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -5 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.3 }}
             >
               <textarea
-                rows={14}
+                rows={12}
                 value={text}
                 onChange={e => {
                   setText(e.target.value);
                   if (error) setError(null);
                 }}
-                placeholder='Paste your package.json here...\n\n{\n  "dependencies": {\n    "express": "^4.18.2"\n  }\n}'
-                className="w-full p-4"
+                placeholder='{\n  "dependencies": {\n    "express": "^4.18.2"\n  }\n}'
+                className="w-full p-5"
               />
             </motion.div>
           ) : (
             <motion.div
               key="upload"
-              initial={{ opacity: 0, y: 5 }}
+              initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -5 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.3 }}
             >
-              <div
+              <motion.div
                 onDrop={handleDrop}
                 onDragOver={e => { e.preventDefault(); setDragOver(true); }}
                 onDragLeave={() => setDragOver(false)}
                 onClick={() => fileRef.current?.click()}
-                className="flex flex-col items-center justify-center py-16 rounded-lg cursor-pointer transition-colors"
-                style={{
-                  border: `2px dashed ${dragOver ? 'var(--cyan-solid)' : 'var(--border-subtle)'}`,
-                  background: dragOver ? 'var(--cyan-dim)' : 'var(--bg-surface)',
+                animate={{
+                  borderColor: dragOver ? 'rgba(34,211,238,0.4)' : 'var(--border-2)',
+                  background: dragOver ? 'rgba(34,211,238,0.04)' : 'var(--surface)',
                 }}
+                className="flex flex-col items-center justify-center py-16 rounded-xl cursor-pointer transition-colors"
+                style={{ border: '2px dashed var(--border-2)' }}
               >
-                <div className="text-4xl mb-3" style={{ opacity: 0.4 }}>
+                <motion.div
+                  animate={{ scale: dragOver ? 1.15 : 1, y: dragOver ? -4 : 0 }}
+                  className="text-4xl mb-3 opacity-30"
+                >
                   {dragOver ? '\ud83d\udce5' : '\ud83d\udcc1'}
-                </div>
-                <p className="text-sm font-mono" style={{ color: 'var(--text-secondary)' }}>
+                </motion.div>
+                <p className="text-sm" style={{ color: 'var(--text-2)' }}>
                   {dragOver ? 'Drop it here' : 'Drop package.json or click to browse'}
                 </p>
-                <p className="text-[11px] font-mono mt-1" style={{ color: 'var(--text-tertiary)' }}>
+                <p className="mono text-[10px] mt-1.5" style={{ color: 'var(--text-3)' }}>
                   Accepts .json files
                 </p>
                 <input
@@ -266,7 +265,7 @@ export default function PackageInput({ onSubmit, loading }: PackageInputProps) {
                     if (file) handleFile(file);
                   }}
                 />
-              </div>
+              </motion.div>
             </motion.div>
           )}
         </AnimatePresence>
@@ -275,11 +274,11 @@ export default function PackageInput({ onSubmit, loading }: PackageInputProps) {
         <AnimatePresence>
           {error && (
             <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
+              initial={{ opacity: 0, height: 0, y: -4 }}
+              animate={{ opacity: 1, height: 'auto', y: 0 }}
               exit={{ opacity: 0, height: 0 }}
-              className="mt-3 px-3 py-2 rounded text-xs font-mono"
-              style={{ background: 'var(--red-dim)', color: 'var(--red-solid)', border: '1px solid var(--red-muted)' }}
+              className="mt-4 px-4 py-2.5 rounded-lg mono text-xs"
+              style={{ background: 'var(--red-3)', color: 'var(--red-1)', border: '1px solid rgba(248,113,113,0.2)' }}
             >
               {error}
             </motion.div>
@@ -287,27 +286,29 @@ export default function PackageInput({ onSubmit, loading }: PackageInputProps) {
         </AnimatePresence>
 
         {/* Submit */}
-        <div className="mt-4 flex items-center gap-3">
-          <button
+        <div className="mt-5 flex items-center gap-4">
+          <motion.button
             onClick={handleSubmit}
             disabled={loading || !text.trim()}
-            className="px-6 py-2.5 rounded-lg font-mono text-sm font-semibold tracking-wide transition-all disabled:opacity-30"
+            whileHover={{ scale: 1.02, boxShadow: '0 0 30px rgba(34,211,238,0.15)' }}
+            whileTap={{ scale: 0.98 }}
+            className="px-7 py-3 rounded-xl mono text-sm font-semibold tracking-wide transition-all disabled:opacity-20 disabled:cursor-not-allowed relative overflow-hidden"
             style={{
-              background: loading ? 'var(--border-subtle)' : 'var(--cyan-solid)',
-              color: loading ? 'var(--text-tertiary)' : 'var(--bg-void)',
+              background: loading ? 'var(--border-2)' : 'linear-gradient(135deg, var(--cyan-1), #38bdf8)',
+              color: loading ? 'var(--text-3)' : 'var(--void)',
             }}
           >
             {loading ? (
               <span className="flex items-center gap-2">
-                <span className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                <span className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" />
                 Analyzing...
               </span>
             ) : (
               'Analyze Dependencies'
             )}
-          </button>
-          <span className="text-[11px] font-mono" style={{ color: 'var(--text-tertiary)' }}>
-            Fetches live data from npm + GitHub
+          </motion.button>
+          <span className="mono text-[10px]" style={{ color: 'var(--text-ghost)' }}>
+            Live data from npm + GitHub
           </span>
         </div>
       </div>

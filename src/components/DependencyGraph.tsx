@@ -2,110 +2,48 @@
 
 import { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import * as d3 from 'd3';
 import { DependencyTreeNode, RiskLevel } from '@/types';
 
-const RISK_COLORS: Record<RiskLevel, string> = {
-  low: '#1acc6e',
-  medium: '#e09a20',
-  high: '#e03050',
-  critical: '#ff4466',
+const COLORS: Record<RiskLevel, string> = {
+  low: '#4ade80',
+  medium: '#fbbf24',
+  high: '#f87171',
+  critical: '#ff6b6b',
 };
 
-const RISK_GLOW: Record<RiskLevel, string> = {
-  low: 'rgba(26,204,110,0.25)',
-  medium: 'rgba(224,154,32,0.25)',
-  high: 'rgba(224,48,80,0.3)',
-  critical: 'rgba(255,68,102,0.4)',
+const GLOW: Record<RiskLevel, string> = {
+  low: 'rgba(74,222,128,0.3)',
+  medium: 'rgba(251,191,36,0.3)',
+  high: 'rgba(248,113,113,0.35)',
+  critical: 'rgba(255,107,107,0.45)',
 };
 
-interface FlatNode {
+interface SimNode extends d3.SimulationNodeDatum {
   id: string;
   name: string;
   riskLevel: RiskLevel;
   score: number;
   depth: number;
-  parentId: string | null;
   childCount: number;
-  x: number;
-  y: number;
 }
 
-interface Link {
-  source: string;
-  target: string;
+interface SimLink extends d3.SimulationLinkDatum<SimNode> {
+  source: string | SimNode;
+  target: string | SimNode;
 }
 
-/**
- * Tidied tree layout using a layered approach.
- * - Level 0 (roots) spread horizontally across the top
- * - Each subsequent level is positioned below its parent
- * - Subtrees are spaced to avoid overlaps using a width accumulator
- */
-function computeLayout(
-  tree: DependencyTreeNode[],
-  canvasWidth: number
-): { nodes: FlatNode[]; links: Link[] } {
-  const nodes: FlatNode[] = [];
-  const links: Link[] = [];
+function flatten(tree: DependencyTreeNode[]): { nodes: SimNode[]; links: SimLink[] } {
+  const nodes: SimNode[] = [];
+  const links: SimLink[] = [];
   const seen = new Set<string>();
 
-  const LEVEL_HEIGHT = 140;
-  const NODE_MIN_WIDTH = 120;
-  const PADDING_X = 80;
-
-  // First pass: compute subtree widths
-  function subtreeWidth(node: DependencyTreeNode, depth: number): number {
-    if (seen.has(node.name) || depth > 3) return NODE_MIN_WIDTH;
-    // Temporarily mark to handle cycles
-    const unseenChildren = node.children.filter(c => !seen.has(c.name));
-    if (unseenChildren.length === 0) return NODE_MIN_WIDTH;
-
-    const tempSeen = new Set(seen);
-    tempSeen.add(node.name);
-
-    let total = 0;
-    for (const child of unseenChildren) {
-      if (tempSeen.has(child.name)) {
-        total += NODE_MIN_WIDTH;
-      } else {
-        tempSeen.add(child.name);
-        const childUnseen = child.children.filter(c => !tempSeen.has(c.name));
-        if (childUnseen.length === 0) {
-          total += NODE_MIN_WIDTH;
-        } else {
-          total += childUnseen.length * NODE_MIN_WIDTH;
-        }
-      }
-    }
-    return Math.max(NODE_MIN_WIDTH, total);
-  }
-
-  // Compute root-level widths to distribute them properly
-  const rootWidths = tree.map(t => subtreeWidth(t, 0));
-  const totalRootWidth = rootWidths.reduce((s, w) => s + w, 0);
-  const scale = totalRootWidth > (canvasWidth - PADDING_X * 2)
-    ? (canvasWidth - PADDING_X * 2) / totalRootWidth
-    : 1;
-
-  // Second pass: place nodes
-  function placeNode(
-    node: DependencyTreeNode,
-    depth: number,
-    leftX: number,
-    allocatedWidth: number,
-    parentId: string | null
-  ) {
+  function walk(node: DependencyTreeNode, depth: number, parentId: string | null) {
     if (seen.has(node.name)) {
-      // Still add link for cross-references
       if (parentId) links.push({ source: parentId, target: node.name });
       return;
     }
     seen.add(node.name);
-
-    const x = leftX + allocatedWidth / 2;
-    const y = 60 + depth * LEVEL_HEIGHT;
-
-    const childrenToPlace = node.children.filter(c => !seen.has(c.name));
 
     nodes.push({
       id: node.name,
@@ -113,459 +51,380 @@ function computeLayout(
       riskLevel: node.riskLevel,
       score: node.score,
       depth,
-      parentId,
       childCount: node.children.length,
-      x,
-      y,
     });
 
-    if (parentId) {
-      links.push({ source: parentId, target: node.name });
+    if (parentId) links.push({ source: parentId, target: node.name });
+
+    if (depth < 3) {
+      node.children.forEach(child => walk(child, depth + 1, node.name));
     }
-
-    if (childrenToPlace.length === 0 || depth >= 3) return;
-
-    // Distribute children across allocated width
-    const childWidth = allocatedWidth / childrenToPlace.length;
-    childrenToPlace.forEach((child, i) => {
-      placeNode(child, depth + 1, leftX + i * childWidth, childWidth, node.name);
-    });
   }
 
-  let cursor = PADDING_X;
-  tree.forEach((rootNode, i) => {
-    const w = rootWidths[i] * scale;
-    placeNode(rootNode, 0, cursor, w, null);
-    cursor += w;
-  });
-
+  tree.forEach(n => walk(n, 0, null));
   return { nodes, links };
 }
 
-interface Props {
-  tree: DependencyTreeNode[];
-}
-
-export default function DependencyGraph({ tree }: Props) {
+export default function DependencyGraph({ tree }: { tree: DependencyTreeNode[] }) {
+  const svgRef = useRef<SVGSVGElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [hoveredNode, setHoveredNode] = useState<string | null>(null);
   const [selectedNode, setSelectedNode] = useState<string | null>(null);
-  const [containerWidth, setContainerWidth] = useState(1200);
-  const [zoom, setZoom] = useState(1);
-  const [pan, setPan] = useState({ x: 0, y: 0 });
-  const [isPanning, setIsPanning] = useState(false);
-  const panStart = useRef({ x: 0, y: 0, panX: 0, panY: 0 });
+  const [dimensions, setDimensions] = useState({ width: 900, height: 600 });
+  const simRef = useRef<d3.Simulation<SimNode, SimLink> | null>(null);
+
+  const { nodes: rawNodes, links: rawLinks } = useMemo(() => flatten(tree), [tree]);
+
+  // Build adjacency set for highlighting
+  const adjacency = useMemo(() => {
+    const adj = new Map<string, Set<string>>();
+    rawLinks.forEach(l => {
+      const s = typeof l.source === 'string' ? l.source : l.source.id;
+      const t = typeof l.target === 'string' ? l.target : l.target.id;
+      if (!adj.has(s)) adj.set(s, new Set());
+      if (!adj.has(t)) adj.set(t, new Set());
+      adj.get(s)!.add(t);
+      adj.get(t)!.add(s);
+    });
+    return adj;
+  }, [rawLinks]);
 
   useEffect(() => {
     if (!containerRef.current) return;
     const obs = new ResizeObserver(entries => {
-      for (const entry of entries) {
-        setContainerWidth(entry.contentRect.width);
-      }
+      const { width } = entries[0].contentRect;
+      setDimensions({ width, height: 600 });
     });
     obs.observe(containerRef.current);
     return () => obs.disconnect();
   }, []);
 
-  const width = Math.max(containerWidth, tree.length * 130 + 200);
-  const { nodes, links } = useMemo(() => computeLayout(tree, width), [tree, width]);
-  const maxDepth = nodes.reduce((m, n) => Math.max(m, n.depth), 0);
-  const height = Math.max(500, (maxDepth + 1) * 140 + 100);
+  useEffect(() => {
+    if (!svgRef.current || rawNodes.length === 0) return;
 
-  const nodeMap = useMemo(() => new Map(nodes.map(n => [n.id, n])), [nodes]);
+    const { width, height } = dimensions;
+    const svg = d3.select(svgRef.current);
 
-  // Build adjacency for hover highlighting
-  const adjacency = useMemo(() => {
-    const adj = new Map<string, Set<string>>();
-    for (const link of links) {
-      if (!adj.has(link.source)) adj.set(link.source, new Set());
-      if (!adj.has(link.target)) adj.set(link.target, new Set());
-      adj.get(link.source)!.add(link.target);
-      adj.get(link.target)!.add(link.source);
-    }
-    return adj;
-  }, [links]);
+    // Clone nodes/links for simulation
+    const simNodes: SimNode[] = rawNodes.map(n => ({ ...n }));
+    const simLinks: SimLink[] = rawLinks.map(l => ({
+      source: typeof l.source === 'string' ? l.source : l.source.id,
+      target: typeof l.target === 'string' ? l.target : l.target.id,
+    }));
 
-  const isRelated = useCallback((nodeId: string) => {
-    if (!hoveredNode) return true;
-    if (nodeId === hoveredNode) return true;
-    return adjacency.get(hoveredNode)?.has(nodeId) || false;
-  }, [hoveredNode, adjacency]);
+    // Clear previous
+    svg.selectAll('*').remove();
 
-  const isLinkHighlighted = useCallback((source: string, target: string) => {
-    if (!hoveredNode) return false;
-    return (hoveredNode === source || hoveredNode === target);
-  }, [hoveredNode]);
+    // Defs for glow filters
+    const defs = svg.append('defs');
 
-  // Pan & zoom handlers
-  const handleWheel = useCallback((e: React.WheelEvent) => {
-    e.preventDefault();
-    const delta = e.deltaY > 0 ? -0.08 : 0.08;
-    setZoom(z => Math.min(2, Math.max(0.3, z + delta)));
-  }, []);
+    // Grid pattern
+    const pattern = defs.append('pattern')
+      .attr('id', 'forcegrid')
+      .attr('width', 60).attr('height', 60)
+      .attr('patternUnits', 'userSpaceOnUse');
+    pattern.append('path')
+      .attr('d', 'M 60 0 L 0 0 0 60')
+      .attr('fill', 'none')
+      .attr('stroke', 'rgba(125,211,252,0.03)')
+      .attr('stroke-width', 0.5);
 
-  const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    if (e.button !== 0) return;
-    setIsPanning(true);
-    panStart.current = { x: e.clientX, y: e.clientY, panX: pan.x, panY: pan.y };
-  }, [pan]);
-
-  const handleMouseMove = useCallback((e: React.MouseEvent) => {
-    if (!isPanning) return;
-    setPan({
-      x: panStart.current.panX + (e.clientX - panStart.current.x),
-      y: panStart.current.panY + (e.clientY - panStart.current.y),
+    // Glow filters
+    Object.entries(COLORS).forEach(([level, color]) => {
+      const filter = defs.append('filter')
+        .attr('id', `nodeglow-${level}`)
+        .attr('x', '-100%').attr('y', '-100%')
+        .attr('width', '300%').attr('height', '300%');
+      filter.append('feGaussianBlur').attr('stdDeviation', '6').attr('result', 'blur');
+      filter.append('feFlood').attr('flood-color', color).attr('flood-opacity', 0.3);
+      filter.append('feComposite').attr('in2', 'blur').attr('operator', 'in');
+      const merge = filter.append('feMerge');
+      merge.append('feMergeNode');
+      merge.append('feMergeNode').attr('in', 'SourceGraphic');
     });
-  }, [isPanning]);
 
-  const handleMouseUp = useCallback(() => setIsPanning(false), []);
+    svg.append('rect').attr('width', width).attr('height', height).attr('fill', 'url(#forcegrid)');
 
-  const resetView = () => { setZoom(1); setPan({ x: 0, y: 0 }); };
+    const g = svg.append('g');
 
-  const selectedData = selectedNode ? nodeMap.get(selectedNode) : null;
+    // Zoom behavior
+    const zoom = d3.zoom<SVGSVGElement, unknown>()
+      .scaleExtent([0.3, 3])
+      .on('zoom', (event) => g.attr('transform', event.transform));
+    svg.call(zoom);
+    svg.call(zoom.transform, d3.zoomIdentity.translate(width / 2, height / 2).scale(0.85).translate(-width / 2, -height / 2));
+
+    // Force simulation
+    const sim = d3.forceSimulation(simNodes)
+      .force('link', d3.forceLink<SimNode, SimLink>(simLinks).id(d => d.id).distance(d => {
+        const s = d.source as SimNode;
+        return s.depth === 0 ? 120 : 80;
+      }).strength(0.6))
+      .force('charge', d3.forceManyBody().strength(d => (d as SimNode).depth === 0 ? -400 : -200))
+      .force('center', d3.forceCenter(width / 2, height / 2).strength(0.05))
+      .force('collision', d3.forceCollide().radius(d => getRadius(d as SimNode) + 20))
+      .force('y', d3.forceY<SimNode>().y(d => 100 + d.depth * 160).strength(0.15))
+      .force('x', d3.forceX(width / 2).strength(0.02));
+
+    simRef.current = sim;
+
+    // Links
+    const linkGroup = g.append('g');
+    const linkSelection = linkGroup.selectAll('path')
+      .data(simLinks)
+      .join('path')
+      .attr('fill', 'none')
+      .attr('stroke', 'rgba(125,211,252,0.08)')
+      .attr('stroke-width', 1);
+
+    // Node groups
+    const nodeGroup = g.append('g');
+    const nodeSelection = nodeGroup.selectAll<SVGGElement, SimNode>('g')
+      .data(simNodes, d => d.id)
+      .join('g')
+      .attr('cursor', 'pointer')
+      .call(d3.drag<SVGGElement, SimNode>()
+        .on('start', (event, d) => {
+          if (!event.active) sim.alphaTarget(0.3).restart();
+          d.fx = d.x;
+          d.fy = d.y;
+        })
+        .on('drag', (event, d) => {
+          d.fx = event.x;
+          d.fy = event.y;
+        })
+        .on('end', (event, d) => {
+          if (!event.active) sim.alphaTarget(0);
+          d.fx = null;
+          d.fy = null;
+        })
+      );
+
+    // Node background glow
+    nodeSelection.append('circle')
+      .attr('r', d => getRadius(d) + 10)
+      .attr('fill', d => GLOW[d.riskLevel])
+      .attr('opacity', d => (d.riskLevel === 'high' || d.riskLevel === 'critical') ? 0.5 : 0);
+
+    // Node circle
+    nodeSelection.append('circle')
+      .attr('r', d => getRadius(d))
+      .attr('fill', 'var(--elevated)')
+      .attr('stroke', d => COLORS[d.riskLevel])
+      .attr('stroke-width', 1.5);
+
+    // Score text
+    nodeSelection.append('text')
+      .attr('text-anchor', 'middle')
+      .attr('dominant-baseline', 'central')
+      .attr('fill', d => COLORS[d.riskLevel])
+      .attr('font-size', d => d.depth === 0 ? 12 : 10)
+      .attr('font-family', "'JetBrains Mono', monospace")
+      .attr('font-weight', '600')
+      .text(d => d.score);
+
+    // Name label
+    nodeSelection.append('text')
+      .attr('text-anchor', 'middle')
+      .attr('y', d => getRadius(d) + 14)
+      .attr('fill', 'var(--text-2)')
+      .attr('font-size', d => d.depth === 0 ? 10 : 8)
+      .attr('font-family', "'JetBrains Mono', monospace")
+      .attr('font-weight', '400')
+      .text(d => d.name.length > 16 ? d.name.slice(0, 14) + '\u2026' : d.name);
+
+    // Child count badge for root nodes
+    nodeSelection.filter(d => d.depth === 0 && d.childCount > 0).each(function(d) {
+      const g = d3.select(this);
+      const r = getRadius(d);
+      g.append('circle')
+        .attr('cx', r - 3).attr('cy', -r + 3).attr('r', 8)
+        .attr('fill', 'var(--panel)').attr('stroke', 'var(--border-2)').attr('stroke-width', 1);
+      g.append('text')
+        .attr('x', r - 3).attr('y', -r + 4)
+        .attr('text-anchor', 'middle').attr('dominant-baseline', 'central')
+        .attr('fill', 'var(--text-3)')
+        .attr('font-size', 8).attr('font-family', "'JetBrains Mono', monospace").attr('font-weight', 600)
+        .text(d.childCount);
+    });
+
+    // Hover/click interactions on nodeSelection
+    nodeSelection
+      .on('mouseenter', function(_, d) {
+        setHoveredNode(d.id);
+        d3.select(this).select('circle:nth-child(2)')
+          .transition().duration(200)
+          .attr('stroke-width', 3);
+      })
+      .on('mouseleave', function() {
+        setHoveredNode(null);
+        d3.select(this).select('circle:nth-child(2)')
+          .transition().duration(200)
+          .attr('stroke-width', 1.5);
+      })
+      .on('click', (_, d) => {
+        setSelectedNode(prev => prev === d.id ? null : d.id);
+      });
+
+    // Tick function
+    sim.on('tick', () => {
+      linkSelection.attr('d', d => {
+        const s = d.source as SimNode;
+        const t = d.target as SimNode;
+        const dx = (t.x || 0) - (s.x || 0);
+        const dy = (t.y || 0) - (s.y || 0);
+        const dr = Math.sqrt(dx * dx + dy * dy) * 1.5;
+        return `M${s.x},${s.y}A${dr},${dr} 0 0,1 ${t.x},${t.y}`;
+      });
+      nodeSelection.attr('transform', d => `translate(${d.x},${d.y})`);
+    });
+
+    // Entrance animation — start with alpha burst
+    sim.alpha(1).restart();
+
+    return () => { sim.stop(); };
+  }, [rawNodes, rawLinks, dimensions]);
+
+  // Update link/node opacity on hover
+  useEffect(() => {
+    if (!svgRef.current) return;
+    const svg = d3.select(svgRef.current);
+
+    svg.selectAll<SVGPathElement, SimLink>('path')
+      .transition().duration(200)
+      .attr('stroke', d => {
+        if (!hoveredNode) return 'rgba(125,211,252,0.08)';
+        const s = typeof d.source === 'string' ? d.source : (d.source as SimNode).id;
+        const t = typeof d.target === 'string' ? d.target : (d.target as SimNode).id;
+        if (s === hoveredNode || t === hoveredNode) {
+          const targetNode = rawNodes.find(n => n.id === t);
+          return targetNode ? COLORS[targetNode.riskLevel] : 'var(--cyan-1)';
+        }
+        return 'rgba(125,211,252,0.02)';
+      })
+      .attr('stroke-width', d => {
+        if (!hoveredNode) return 1;
+        const s = typeof d.source === 'string' ? d.source : (d.source as SimNode).id;
+        const t = typeof d.target === 'string' ? d.target : (d.target as SimNode).id;
+        return (s === hoveredNode || t === hoveredNode) ? 2 : 0.5;
+      })
+      .attr('opacity', d => {
+        if (!hoveredNode) return 1;
+        const s = typeof d.source === 'string' ? d.source : (d.source as SimNode).id;
+        const t = typeof d.target === 'string' ? d.target : (d.target as SimNode).id;
+        return (s === hoveredNode || t === hoveredNode) ? 0.7 : 0.1;
+      });
+
+    svg.selectAll<SVGGElement, SimNode>('g > g')
+      .transition().duration(200)
+      .attr('opacity', d => {
+        if (!hoveredNode) return 1;
+        if (d.id === hoveredNode) return 1;
+        return adjacency.get(hoveredNode)?.has(d.id) ? 0.9 : 0.15;
+      });
+  }, [hoveredNode, rawNodes, adjacency]);
+
+  const selectedData = selectedNode ? rawNodes.find(n => n.id === selectedNode) : null;
 
   return (
-    <div className="panel overflow-hidden">
+    <div className="glass-lg shine-top overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b" style={{ borderColor: 'var(--border-dim)' }}>
-        <h3 className="font-mono text-sm font-semibold tracking-wider uppercase" style={{ color: 'var(--text-secondary)' }}>
-          Dependency Graph
-        </h3>
-        <div className="flex items-center gap-5">
-          {/* Legend */}
-          <div className="flex items-center gap-3">
-            {(['low', 'medium', 'high', 'critical'] as RiskLevel[]).map(level => (
-              <div key={level} className="flex items-center gap-1.5">
-                <div className="w-2 h-2 rounded-full" style={{ background: RISK_COLORS[level] }} />
-                <span className="text-[10px] font-mono uppercase" style={{ color: 'var(--text-tertiary)' }}>
-                  {level}
-                </span>
-              </div>
-            ))}
-          </div>
-          {/* Zoom controls */}
-          <div className="flex items-center gap-1" style={{ borderLeft: '1px solid var(--border-dim)', paddingLeft: 12 }}>
-            <button
-              onClick={() => setZoom(z => Math.min(2, z + 0.15))}
-              className="w-6 h-6 rounded flex items-center justify-center text-xs font-mono"
-              style={{ background: 'var(--bg-surface)', color: 'var(--text-secondary)', border: '1px solid var(--border-dim)' }}
-            >
-              +
-            </button>
-            <span className="text-[10px] font-mono w-10 text-center" style={{ color: 'var(--text-tertiary)' }}>
-              {Math.round(zoom * 100)}%
-            </span>
-            <button
-              onClick={() => setZoom(z => Math.max(0.3, z - 0.15))}
-              className="w-6 h-6 rounded flex items-center justify-center text-xs font-mono"
-              style={{ background: 'var(--bg-surface)', color: 'var(--text-secondary)', border: '1px solid var(--border-dim)' }}
-            >
-              -
-            </button>
-            <button
-              onClick={resetView}
-              className="ml-1 px-2 h-6 rounded flex items-center justify-center text-[10px] font-mono"
-              style={{ background: 'var(--bg-surface)', color: 'var(--text-tertiary)', border: '1px solid var(--border-dim)' }}
-            >
-              Reset
-            </button>
-          </div>
+      <div className="flex items-center justify-between px-6 py-4 border-b" style={{ borderColor: 'var(--border-1)' }}>
+        <div className="flex items-center gap-3">
+          <h3 className="label" style={{ fontSize: 11 }}>Dependency Graph</h3>
+          <span className="mono text-[10px]" style={{ color: 'var(--text-ghost)' }}>
+            drag to rearrange &bull; scroll to zoom
+          </span>
+        </div>
+        <div className="flex items-center gap-4">
+          {(['low', 'medium', 'high', 'critical'] as RiskLevel[]).map(level => (
+            <div key={level} className="flex items-center gap-1.5">
+              <div className="w-2 h-2 rounded-full" style={{ background: COLORS[level] }} />
+              <span className="mono text-[9px] uppercase" style={{ color: 'var(--text-3)' }}>{level}</span>
+            </div>
+          ))}
         </div>
       </div>
 
       <div className="flex">
-        {/* Graph canvas */}
         <div
           ref={containerRef}
-          className="flex-1 relative overflow-hidden"
-          style={{ background: 'var(--bg-surface)', height: Math.min(height * zoom + 40, 700), cursor: isPanning ? 'grabbing' : 'grab' }}
-          onWheel={handleWheel}
-          onMouseDown={handleMouseDown}
-          onMouseMove={handleMouseMove}
-          onMouseUp={handleMouseUp}
-          onMouseLeave={handleMouseUp}
+          className="flex-1 relative"
+          style={{ background: 'var(--abyss)', height: 600 }}
         >
           <svg
-            width={width}
-            height={height}
-            viewBox={`0 0 ${width} ${height}`}
+            ref={svgRef}
+            width={dimensions.width}
+            height={dimensions.height}
             className="block"
-            style={{
-              transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
-              transformOrigin: 'top left',
-              transition: isPanning ? 'none' : 'transform 0.15s ease-out',
-            }}
-          >
-            {/* Grid */}
-            <defs>
-              <pattern id="graphGrid" width="50" height="50" patternUnits="userSpaceOnUse">
-                <path d="M 50 0 L 0 0 0 50" fill="none" stroke="var(--border-dim)" strokeWidth="0.4" opacity="0.4" />
-              </pattern>
-              {/* Glow filters */}
-              {(['low', 'medium', 'high', 'critical'] as RiskLevel[]).map(level => (
-                <filter key={level} id={`glow-${level}`} x="-50%" y="-50%" width="200%" height="200%">
-                  <feGaussianBlur stdDeviation="4" result="blur" />
-                  <feFlood floodColor={RISK_COLORS[level]} floodOpacity="0.3" />
-                  <feComposite in2="blur" operator="in" />
-                  <feMerge>
-                    <feMergeNode />
-                    <feMergeNode in="SourceGraphic" />
-                  </feMerge>
-                </filter>
-              ))}
-            </defs>
-            <rect width="100%" height="100%" fill="url(#graphGrid)" />
-
-            {/* Links — curved bezier paths */}
-            {links.map((link, i) => {
-              const source = nodeMap.get(link.source);
-              const target = nodeMap.get(link.target);
-              if (!source || !target) return null;
-
-              const highlighted = isLinkHighlighted(link.source, link.target);
-              const visible = hoveredNode ? highlighted : true;
-
-              // Curved path from bottom of source to top of target
-              const sy = source.y + 22;
-              const ty = target.y - 22;
-              const midY = (sy + ty) / 2;
-
-              return (
-                <motion.path
-                  key={`${link.source}-${link.target}-${i}`}
-                  d={`M ${source.x} ${sy} C ${source.x} ${midY}, ${target.x} ${midY}, ${target.x} ${ty}`}
-                  fill="none"
-                  stroke={highlighted ? RISK_COLORS[target.riskLevel] : 'var(--border-subtle)'}
-                  strokeWidth={highlighted ? 2 : 1}
-                  opacity={visible ? (highlighted ? 0.8 : 0.35) : 0.06}
-                  initial={{ pathLength: 0 }}
-                  animate={{ pathLength: 1 }}
-                  transition={{ duration: 0.6, delay: i * 0.015 }}
-                />
-              );
-            })}
-
-            {/* Nodes */}
-            {nodes.map((node, i) => {
-              const color = RISK_COLORS[node.riskLevel];
-              const related = isRelated(node.id);
-              const isHovered = hoveredNode === node.id;
-              const isSelected = selectedNode === node.id;
-              const r = node.depth === 0 ? 22 : node.depth === 1 ? 18 : 14;
-
-              return (
-                <motion.g
-                  key={node.id}
-                  initial={{ opacity: 0, scale: 0 }}
-                  animate={{ opacity: related ? 1 : 0.12, scale: 1 }}
-                  transition={{ duration: 0.35, delay: i * 0.02, type: 'spring', stiffness: 300, damping: 25 }}
-                  onMouseEnter={() => setHoveredNode(node.id)}
-                  onMouseLeave={() => setHoveredNode(null)}
-                  onClick={(e) => { e.stopPropagation(); setSelectedNode(isSelected ? null : node.id); }}
-                  className="cursor-pointer"
-                  style={{ transformOrigin: `${node.x}px ${node.y}px` }}
-                >
-                  {/* Outer glow ring for high/critical */}
-                  {(node.riskLevel === 'high' || node.riskLevel === 'critical') && (
-                    <circle
-                      cx={node.x}
-                      cy={node.y}
-                      r={r + 10}
-                      fill="none"
-                      stroke={RISK_GLOW[node.riskLevel]}
-                      strokeWidth={6}
-                      opacity={isHovered ? 0.8 : 0.4}
-                    />
-                  )}
-
-                  {/* Selection ring */}
-                  {isSelected && (
-                    <circle
-                      cx={node.x}
-                      cy={node.y}
-                      r={r + 6}
-                      fill="none"
-                      stroke="var(--cyan-solid)"
-                      strokeWidth={2}
-                      strokeDasharray="4 3"
-                    />
-                  )}
-
-                  {/* Node body */}
-                  <circle
-                    cx={node.x}
-                    cy={node.y}
-                    r={r}
-                    fill="var(--bg-elevated)"
-                    stroke={color}
-                    strokeWidth={isHovered || isSelected ? 2.5 : 1.5}
-                  />
-
-                  {/* Score */}
-                  <text
-                    x={node.x}
-                    y={node.y + 1}
-                    textAnchor="middle"
-                    dominantBaseline="central"
-                    fill={color}
-                    fontSize={node.depth === 0 ? 11 : node.depth === 1 ? 10 : 8}
-                    fontFamily="'IBM Plex Mono', monospace"
-                    fontWeight="600"
-                  >
-                    {node.score}
-                  </text>
-
-                  {/* Label — only show for depth 0-1, or on hover */}
-                  {(node.depth <= 1 || isHovered) && (
-                    <text
-                      x={node.x}
-                      y={node.y + r + 12}
-                      textAnchor="middle"
-                      fill={isHovered ? 'var(--text-primary)' : 'var(--text-secondary)'}
-                      fontSize={node.depth === 0 ? 10 : 9}
-                      fontFamily="'IBM Plex Mono', monospace"
-                      fontWeight={node.depth === 0 ? '500' : '400'}
-                    >
-                      {node.name.length > 20 ? node.name.slice(0, 18) + '\u2026' : node.name}
-                    </text>
-                  )}
-
-                  {/* Child count badge for depth 0 nodes with children */}
-                  {node.depth === 0 && node.childCount > 0 && (
-                    <>
-                      <circle
-                        cx={node.x + r - 2}
-                        cy={node.y - r + 2}
-                        r={7}
-                        fill="var(--bg-panel)"
-                        stroke="var(--border-subtle)"
-                        strokeWidth={1}
-                      />
-                      <text
-                        x={node.x + r - 2}
-                        y={node.y - r + 3}
-                        textAnchor="middle"
-                        dominantBaseline="central"
-                        fill="var(--text-tertiary)"
-                        fontSize="7"
-                        fontFamily="'IBM Plex Mono', monospace"
-                        fontWeight="600"
-                      >
-                        {node.childCount}
-                      </text>
-                    </>
-                  )}
-                </motion.g>
-              );
-            })}
-          </svg>
-
-          {/* Depth level labels */}
-          {Array.from({ length: maxDepth + 1 }, (_, d) => (
-            <div
-              key={d}
-              className="absolute left-3 font-mono text-[9px] uppercase tracking-widest"
-              style={{
-                top: (60 + d * 140) * zoom + pan.y - 8,
-                color: 'var(--text-tertiary)',
-                opacity: 0.5,
-                transform: `scale(${zoom})`,
-                transformOrigin: 'left center',
-              }}
-            >
-              {d === 0 ? 'Direct' : d === 1 ? 'Level 1' : d === 2 ? 'Level 2' : `Level ${d}`}
-            </div>
-          ))}
+          />
         </div>
 
-        {/* Detail sidebar when a node is selected */}
+        {/* Detail sidebar */}
         <AnimatePresence>
           {selectedData && (
             <motion.div
               initial={{ width: 0, opacity: 0 }}
               animate={{ width: 260, opacity: 1 }}
               exit={{ width: 0, opacity: 0 }}
-              transition={{ duration: 0.25 }}
+              transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
               className="overflow-hidden border-l flex-shrink-0"
-              style={{ background: 'var(--bg-elevated)', borderColor: 'var(--border-dim)' }}
+              style={{ background: 'var(--elevated)', borderColor: 'var(--border-1)' }}
             >
-              <div className="p-4 w-[260px]">
-                <div className="flex items-center justify-between mb-4">
-                  <span className="font-mono text-[10px] uppercase tracking-widest" style={{ color: 'var(--text-tertiary)' }}>
-                    Node Detail
-                  </span>
-                  <button
-                    onClick={() => setSelectedNode(null)}
-                    className="text-xs font-mono"
-                    style={{ color: 'var(--text-tertiary)' }}
-                  >
-                    &times;
-                  </button>
+              <div className="p-5 w-[260px]">
+                <div className="flex items-center justify-between mb-5">
+                  <span className="label">Node Detail</span>
+                  <button onClick={() => setSelectedNode(null)} className="mono text-xs" style={{ color: 'var(--text-3)' }}>&times;</button>
                 </div>
 
-                <div className="mb-4">
-                  <div className="font-mono text-sm font-semibold mb-1" style={{ color: 'var(--text-primary)' }}>
+                <div className="mb-5">
+                  <div className="mono text-sm font-semibold mb-2" style={{ color: 'var(--text-1)' }}>
                     {selectedData.name}
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-3">
                     <span
-                      className="inline-flex items-center px-2 py-0.5 rounded font-mono text-[10px] font-semibold uppercase border"
-                      style={{
-                        color: RISK_COLORS[selectedData.riskLevel],
-                        borderColor: RISK_COLORS[selectedData.riskLevel],
-                        background: RISK_GLOW[selectedData.riskLevel],
-                      }}
+                      className="inline-flex items-center px-2 py-0.5 rounded-md mono text-[10px] font-semibold uppercase border"
+                      style={{ color: COLORS[selectedData.riskLevel], borderColor: COLORS[selectedData.riskLevel], background: GLOW[selectedData.riskLevel] }}
                     >
                       {selectedData.riskLevel}
                     </span>
-                    <span className="font-mono text-lg font-bold" style={{ color: RISK_COLORS[selectedData.riskLevel] }}>
+                    <span className="mono text-xl font-bold" style={{ color: COLORS[selectedData.riskLevel] }}>
                       {selectedData.score}
                     </span>
                   </div>
                 </div>
 
-                <dl className="space-y-2.5">
+                <dl className="space-y-3">
                   {[
                     { label: 'Depth', value: `Level ${selectedData.depth}` },
-                    { label: 'Direct Children', value: String(selectedData.childCount) },
-                    { label: 'Connected To', value: `${adjacency.get(selectedData.id)?.size || 0} nodes` },
+                    { label: 'Children', value: String(selectedData.childCount) },
+                    { label: 'Connected', value: `${adjacency.get(selectedData.id)?.size || 0} nodes` },
                   ].map(item => (
                     <div key={item.label} className="flex items-center justify-between">
-                      <dt className="text-[10px] font-mono uppercase tracking-wider" style={{ color: 'var(--text-tertiary)' }}>
-                        {item.label}
-                      </dt>
-                      <dd className="text-xs font-mono font-medium" style={{ color: 'var(--text-secondary)' }}>
-                        {item.value}
-                      </dd>
+                      <dt className="label">{item.label}</dt>
+                      <dd className="mono text-[11px] font-medium" style={{ color: 'var(--text-2)' }}>{item.value}</dd>
                     </div>
                   ))}
                 </dl>
 
-                {/* Connected nodes list */}
                 {adjacency.get(selectedData.id) && (
-                  <div className="mt-4 pt-4 border-t" style={{ borderColor: 'var(--border-dim)' }}>
-                    <span className="text-[10px] font-mono uppercase tracking-widest" style={{ color: 'var(--text-tertiary)' }}>
-                      Connected
-                    </span>
-                    <div className="mt-2 space-y-1 max-h-48 overflow-y-auto">
+                  <div className="mt-5 pt-5 border-t" style={{ borderColor: 'var(--border-1)' }}>
+                    <span className="label">Connected</span>
+                    <div className="mt-3 space-y-1 max-h-52 overflow-y-auto">
                       {Array.from(adjacency.get(selectedData.id) || []).map(id => {
-                        const n = nodeMap.get(id);
+                        const n = rawNodes.find(nn => nn.id === id);
                         if (!n) return null;
                         return (
                           <button
                             key={id}
                             onClick={() => setSelectedNode(id)}
-                            className="w-full flex items-center justify-between px-2 py-1.5 rounded text-left transition-colors"
-                            style={{ background: 'var(--bg-surface)' }}
-                            onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-hover)')}
-                            onMouseLeave={e => (e.currentTarget.style.background = 'var(--bg-surface)')}
+                            className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-left transition-all"
+                            style={{ background: 'var(--surface)' }}
+                            onMouseEnter={e => (e.currentTarget.style.background = 'var(--hover)')}
+                            onMouseLeave={e => (e.currentTarget.style.background = 'var(--surface)')}
                           >
-                            <span className="text-[11px] font-mono truncate" style={{ color: 'var(--text-secondary)' }}>
-                              {n.name}
-                            </span>
-                            <span className="text-[10px] font-mono font-semibold ml-2 flex-shrink-0" style={{ color: RISK_COLORS[n.riskLevel] }}>
-                              {n.score}
-                            </span>
+                            <span className="mono text-[11px] truncate" style={{ color: 'var(--text-2)' }}>{n.name}</span>
+                            <span className="mono text-[10px] font-bold ml-2 flex-shrink-0" style={{ color: COLORS[n.riskLevel] }}>{n.score}</span>
                           </button>
                         );
                       })}
@@ -579,4 +438,10 @@ export default function DependencyGraph({ tree }: Props) {
       </div>
     </div>
   );
+}
+
+function getRadius(d: SimNode): number {
+  if (d.depth === 0) return 24;
+  if (d.depth === 1) return 18;
+  return 13;
 }
