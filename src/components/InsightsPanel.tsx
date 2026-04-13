@@ -3,117 +3,86 @@
 import { motion } from 'framer-motion';
 import { AIInsight } from '@/types';
 
-const TYPE_STYLES: Record<AIInsight['type'], { icon: string; accent: string; bg: string; border: string }> = {
-  summary: {
-    icon: '\ud83d\udcca',
-    accent: 'var(--cyan-solid)',
-    bg: 'var(--cyan-dim)',
-    border: 'var(--cyan-muted)',
-  },
-  risk: {
-    icon: '\u26a0\ufe0f',
-    accent: 'var(--red-solid)',
-    bg: 'var(--red-dim)',
-    border: 'var(--red-muted)',
-  },
-  recommendation: {
-    icon: '\ud83d\udca1',
-    accent: 'var(--amber-solid)',
-    bg: 'var(--amber-dim)',
-    border: 'var(--amber-muted)',
-  },
-  alternative: {
-    icon: '\ud83d\udd04',
-    accent: 'var(--green-solid)',
-    bg: 'var(--green-dim)',
-    border: 'var(--green-muted)',
-  },
+const TYPE_CONFIG: Record<AIInsight['type'], { icon: string; accent: string; bg: string; border: string }> = {
+  summary: { icon: '\u25c8', accent: 'var(--cyan-1)', bg: 'var(--cyan-3)', border: 'rgba(34,211,238,0.15)' },
+  risk: { icon: '\u25b2', accent: 'var(--red-1)', bg: 'var(--red-3)', border: 'rgba(248,113,113,0.15)' },
+  recommendation: { icon: '\u2192', accent: 'var(--amber-1)', bg: 'var(--amber-3)', border: 'rgba(251,191,36,0.15)' },
+  alternative: { icon: '\u21bb', accent: 'var(--green-1)', bg: 'var(--green-3)', border: 'rgba(74,222,128,0.15)' },
 };
 
-interface InsightsPanelProps {
-  insights: AIInsight[];
-  loading?: boolean;
-}
-
-export default function InsightsPanel({ insights, loading }: InsightsPanelProps) {
+export default function InsightsPanel({ insights, loading }: { insights: AIInsight[]; loading?: boolean }) {
   return (
-    <div className="panel overflow-hidden">
-      <div className="flex items-center justify-between p-4 border-b" style={{ borderColor: 'var(--border-dim)' }}>
-        <div className="flex items-center gap-2">
-          <h3 className="font-mono text-sm font-semibold tracking-wider uppercase" style={{ color: 'var(--text-secondary)' }}>
-            AI Insights
-          </h3>
-          <span className="px-2 py-0.5 text-[9px] font-mono rounded" style={{
-            background: 'var(--cyan-dim)',
-            color: 'var(--cyan-solid)',
-            border: '1px solid var(--cyan-muted)',
-          }}>
+    <div className="glass-lg shine-top overflow-hidden">
+      {/* Header */}
+      <div className="flex items-center justify-between px-6 py-4 border-b" style={{ borderColor: 'var(--border-1)' }}>
+        <div className="flex items-center gap-3">
+          <h3 className="label" style={{ fontSize: 11 }}>AI Insights</h3>
+          <span className="mono text-[9px] px-2 py-0.5 rounded-md" style={{ background: 'var(--cyan-3)', color: 'var(--cyan-1)', border: '1px solid rgba(34,211,238,0.15)' }}>
             GEMMA 3
           </span>
         </div>
         {loading && (
           <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full animate-pulse" style={{ background: 'var(--cyan-solid)' }} />
-            <span className="text-[11px] font-mono" style={{ color: 'var(--text-tertiary)' }}>Analyzing...</span>
+            <span className="relative flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full rounded-full opacity-75 animate-ping" style={{ background: 'var(--cyan-1)' }} />
+              <span className="relative inline-flex rounded-full h-2 w-2" style={{ background: 'var(--cyan-1)' }} />
+            </span>
+            <span className="mono text-[10px]" style={{ color: 'var(--text-3)' }}>Analyzing...</span>
           </div>
         )}
       </div>
 
-      <div className="p-4 space-y-3">
+      <div className="p-5 space-y-3">
+        {/* Loading skeletons */}
         {loading && insights.length === 0 && (
           <div className="space-y-3">
             {[...Array(3)].map((_, i) => (
-              <div key={i} className="rounded-lg p-4 animate-pulse" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-dim)' }}>
-                <div className="h-3 rounded w-1/3 mb-3" style={{ background: 'var(--border-subtle)' }} />
-                <div className="h-2 rounded w-full mb-2" style={{ background: 'var(--border-dim)' }} />
-                <div className="h-2 rounded w-2/3" style={{ background: 'var(--border-dim)' }} />
+              <div key={i} className="rounded-xl p-5" style={{ background: 'var(--surface)', border: '1px solid var(--border-1)' }}>
+                <div className="shimmer-line h-3 rounded w-1/3 mb-3" />
+                <div className="shimmer-line h-2 rounded w-full mb-2" />
+                <div className="shimmer-line h-2 rounded w-2/3" />
               </div>
             ))}
           </div>
         )}
 
         {insights.map((insight, i) => {
-          const style = TYPE_STYLES[insight.type];
+          const cfg = TYPE_CONFIG[insight.type];
           return (
             <motion.div
               key={i}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.1 }}
-              className="rounded-lg p-4"
-              style={{
-                background: style.bg,
-                border: `1px solid ${style.border}`,
-              }}
+              initial={{ opacity: 0, y: 12, filter: 'blur(4px)' }}
+              animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+              transition={{ delay: i * 0.08, duration: 0.5, ease: [0.25, 0.1, 0.25, 1] }}
+              className="rounded-xl p-5 hover-lift"
+              style={{ background: cfg.bg, border: `1px solid ${cfg.border}` }}
             >
               <div className="flex items-start gap-3">
-                <span className="text-lg flex-shrink-0 mt-0.5">{style.icon}</span>
+                {/* Icon */}
+                <span
+                  className="mono text-sm font-bold flex-shrink-0 w-7 h-7 rounded-lg flex items-center justify-center mt-0.5"
+                  style={{ background: 'rgba(0,0,0,0.2)', color: cfg.accent }}
+                >
+                  {cfg.icon}
+                </span>
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="font-mono text-xs font-semibold" style={{ color: style.accent }}>
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <span className="mono text-[12px] font-semibold" style={{ color: cfg.accent }}>
                       {insight.title}
                     </span>
                     {insight.packageName && (
-                      <span className="px-1.5 py-0.5 text-[9px] font-mono rounded" style={{
-                        background: 'var(--bg-panel)',
-                        color: 'var(--text-tertiary)',
-                        border: '1px solid var(--border-dim)',
-                      }}>
+                      <span className="mono text-[9px] px-1.5 py-0.5 rounded" style={{ background: 'rgba(0,0,0,0.2)', color: 'var(--text-3)' }}>
                         {insight.packageName}
                       </span>
                     )}
                   </div>
-                  <p className="text-xs leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+                  <p className="text-[12px] leading-relaxed" style={{ color: 'var(--text-2)', fontFamily: 'var(--font-body)' }}>
                     {insight.description}
                   </p>
                   {insight.alternative && (
-                    <div className="mt-2 flex items-center gap-1.5">
-                      <span className="text-[10px] font-mono" style={{ color: 'var(--text-tertiary)' }}>
-                        Try:
-                      </span>
-                      <span className="font-mono text-[11px] font-semibold" style={{ color: 'var(--green-solid)' }}>
-                        {insight.alternative}
-                      </span>
+                    <div className="mt-2.5 flex items-center gap-2 px-3 py-1.5 rounded-lg w-fit" style={{ background: 'rgba(0,0,0,0.2)' }}>
+                      <span className="mono text-[9px] uppercase tracking-wider" style={{ color: 'var(--text-3)' }}>Try:</span>
+                      <span className="mono text-[11px] font-semibold" style={{ color: 'var(--green-1)' }}>{insight.alternative}</span>
                     </div>
                   )}
                 </div>
