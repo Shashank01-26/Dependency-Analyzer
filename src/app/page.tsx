@@ -1,5 +1,4 @@
 'use client';
-
 import { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ScanResult, AIInsight } from '@/types';
@@ -14,342 +13,156 @@ import InsightsPanel from '@/components/InsightsPanel';
 
 type Tab = 'table' | 'graph' | 'insights';
 
-// Cinematic stagger variants
-const stagger = {
-  hidden: {},
-  visible: { transition: { staggerChildren: 0.06 } },
-};
-
-const fadeUp = {
-  hidden: { opacity: 0, y: 24, filter: 'blur(6px)' },
-  visible: { opacity: 1, y: 0, filter: 'blur(0px)', transition: { duration: 0.6, ease: [0.25, 0.1, 0.25, 1] as const } },
-};
-
 export default function Home() {
   const [splashDone, setSplashDone] = useState(false);
   const [scan, setScan] = useState<ScanResult | null>(null);
   const [insights, setInsights] = useState<AIInsight[]>([]);
   const [loading, setLoading] = useState(false);
   const [insightsLoading, setInsightsLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState<Tab>('table');
+  const [tab, setTab] = useState<Tab>('table');
   const [error, setError] = useState<string | null>(null);
 
-  const handleAnalyze = useCallback(async (raw: string) => {
-    setLoading(true);
-    setError(null);
-    setScan(null);
-    setInsights([]);
-
+  const analyze = useCallback(async (raw: string) => {
+    setLoading(true); setError(null); setScan(null); setInsights([]);
     try {
-      const res = await fetch('/api/analyze', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ raw }),
-      });
-
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || 'Analysis failed');
-      }
-
+      const res = await fetch('/api/analyze', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ raw }) });
+      if (!res.ok) throw new Error((await res.json()).error || 'Failed');
       const result: ScanResult = await res.json();
       setScan(result);
-
       setInsightsLoading(true);
-      fetch('/api/insights', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(result),
-      })
-        .then(r => r.json())
-        .then(data => setInsights(data.insights || []))
-        .catch(() => {})
-        .finally(() => setInsightsLoading(false));
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Analysis failed');
-    } finally {
-      setLoading(false);
-    }
+      fetch('/api/insights', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(result) })
+        .then(r => r.json()).then(d => setInsights(d.insights || [])).catch(() => {}).finally(() => setInsightsLoading(false));
+    } catch (e) { setError(e instanceof Error ? e.message : 'Failed'); }
+    finally { setLoading(false); }
   }, []);
 
-  const handleExport = async (format: 'json' | 'csv') => {
+  const exportReport = async (fmt: 'json' | 'csv') => {
     if (!scan) return;
-    const res = await fetch('/api/export', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ scan, format }),
-    });
-    const blob = await res.blob();
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `depscope-report-${scan.id.slice(0, 8)}.${format}`;
-    a.click();
-    URL.revokeObjectURL(url);
+    const res = await fetch('/api/export', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ scan, format: fmt }) });
+    const b = await res.blob(); const u = URL.createObjectURL(b);
+    const a = document.createElement('a'); a.href = u; a.download = `depscope-${scan.id.slice(0, 8)}.${fmt}`; a.click(); URL.revokeObjectURL(u);
   };
 
-  // Splash screen
-  if (!splashDone) {
-    return <SplashScreen onComplete={() => setSplashDone(true)} />;
-  }
+  if (!splashDone) return <SplashScreen onComplete={() => setSplashDone(true)} />;
 
   return (
     <div className="flex-1 flex flex-col">
       <Header />
-
-      <main className="flex-1 max-w-[1440px] w-full mx-auto px-8 py-10">
-        {/* ============ INPUT VIEW ============ */}
+      <main className="flex-1 max-w-6xl w-full mx-auto px-6 py-10">
         <AnimatePresence mode="wait">
+          {/* ═══ INPUT ═══ */}
           {!scan && (
-            <motion.div
-              key="input"
-              initial="hidden"
-              animate="visible"
-              exit={{ opacity: 0, y: -30, filter: 'blur(10px)', transition: { duration: 0.4 } }}
-              variants={stagger}
-              className="max-w-3xl mx-auto"
-            >
-              {/* Hero */}
-              <motion.div variants={fadeUp} className="text-center mb-10">
-                <h2
-                  className="display text-5xl md:text-6xl leading-tight mb-4"
-                  style={{ fontStyle: 'italic' }}
-                >
-                  Know your <span className="text-gradient">dependencies.</span>
-                </h2>
-                <p className="text-base max-w-md mx-auto leading-relaxed" style={{ color: 'var(--text-2)' }}>
-                  Drop your package.json and get a full risk assessment &mdash; maintenance health,
-                  security vulnerabilities, and AI-powered insights.
-                </p>
+            <motion.div key="input" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}
+              className="max-w-2xl mx-auto">
+              <div className="text-center mb-10">
+                <motion.h2 initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
+                  className="text-4xl md:text-5xl font-extrabold text-white leading-tight mb-4">
+                  Know your{' '}<span className="gradient-text">dependencies.</span>
+                </motion.h2>
+                <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }}
+                  className="text-lg" style={{ color: 'var(--text-2)' }}>
+                  Drop your package.json and get a full risk assessment with AI-powered insights.
+                </motion.p>
+              </div>
+
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
+                <PackageInput onSubmit={analyze} loading={loading} />
               </motion.div>
 
-              <motion.div variants={fadeUp}>
-                <PackageInput onSubmit={handleAnalyze} loading={loading} />
-              </motion.div>
+              <AnimatePresence>{error && (
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                  className="mt-5 p-4 rounded-xl text-sm font-medium"
+                  style={{ background: 'rgba(255,69,58,0.1)', color: 'var(--rose)', border: '1px solid rgba(255,69,58,0.2)' }}>{error}</motion.div>
+              )}</AnimatePresence>
 
-              {/* Error */}
-              <AnimatePresence>
-                {error && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 5 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0 }}
-                    className="mt-5 p-4 rounded-xl mono text-sm"
-                    style={{ background: 'var(--red-3)', color: 'var(--red-1)', border: '1px solid rgba(248,113,113,0.2)' }}
-                  >
-                    {error}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
-              {/* Feature highlights */}
-              <motion.div variants={fadeUp} className="mt-12 grid grid-cols-3 gap-4">
+              {/* Features */}
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}
+                className="mt-14 grid grid-cols-1 sm:grid-cols-3 gap-4">
                 {[
-                  { icon: '\u25c8', title: 'Risk Scoring', desc: 'Weighted composite of 5 signals' },
-                  { icon: '\u25b2', title: 'Vuln Detection', desc: 'Live npm audit + CVE data' },
-                  { icon: '\u25cb', title: 'AI Analysis', desc: 'Llama 3.3 70B insights' },
+                  { icon: '🎯', title: 'Risk Scoring', desc: 'Weighted composite of 5 signals', color: 'var(--blue)' },
+                  { icon: '🔒', title: 'Vuln Detection', desc: 'Live npm audit + CVE data', color: 'var(--rose)' },
+                  { icon: '🤖', title: 'AI Analysis', desc: 'Llama 3.3 70B insights', color: 'var(--violet)' },
                 ].map((f, i) => (
-                  <motion.div
-                    key={i}
-                    variants={fadeUp}
-                    className="glass p-5 text-center group hover-lift"
-                  >
-                    <span className="mono text-lg block mb-2 group-hover:text-[var(--cyan-1)] transition-colors" style={{ color: 'var(--text-3)' }}>
-                      {f.icon}
-                    </span>
-                    <h4 className="mono text-[11px] font-semibold tracking-wider uppercase mb-1" style={{ color: 'var(--text-1)' }}>
-                      {f.title}
-                    </h4>
-                    <p className="text-[11px]" style={{ color: 'var(--text-3)' }}>{f.desc}</p>
+                  <motion.div key={i} whileHover={{ y: -4, borderColor: 'var(--border-2)' }}
+                    className="card p-6 text-center cursor-default transition-shadow hover:shadow-lg hover:shadow-[rgba(79,143,247,0.05)]">
+                    <span className="text-3xl block mb-3">{f.icon}</span>
+                    <h4 className="text-sm font-bold text-white mb-1">{f.title}</h4>
+                    <p className="text-sm" style={{ color: 'var(--text-3)' }}>{f.desc}</p>
                   </motion.div>
                 ))}
               </motion.div>
             </motion.div>
           )}
 
-          {/* ============ RESULTS DASHBOARD ============ */}
+          {/* ═══ DASHBOARD ═══ */}
           {scan && (
-            <motion.div
-              key="results"
-              initial="hidden"
-              animate="visible"
-              variants={stagger}
-            >
-              {/* Top bar */}
-              <motion.div variants={fadeUp} className="flex items-center justify-between mb-8">
-                <motion.button
-                  whileHover={{ x: -3 }}
-                  onClick={() => { setScan(null); setInsights([]); setActiveTab('table'); }}
-                  className="flex items-center gap-2 mono text-[11px] transition-colors"
-                  style={{ color: 'var(--text-3)' }}
-                >
-                  <span>&larr;</span> New Scan
-                </motion.button>
-                <div className="flex items-center gap-2">
-                  {(['json', 'csv'] as const).map(fmt => (
-                    <motion.button
-                      key={fmt}
-                      whileHover={{ scale: 1.03 }}
-                      whileTap={{ scale: 0.97 }}
-                      onClick={() => handleExport(fmt)}
-                      className="glass px-4 py-2 mono text-[10px] uppercase tracking-wider transition-all"
-                      style={{ color: 'var(--text-2)' }}
-                    >
-                      Export {fmt.toUpperCase()}
-                    </motion.button>
-                  ))}
+            <motion.div key="results" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+              <div className="flex items-center justify-between mb-8">
+                <button onClick={() => { setScan(null); setInsights([]); setTab('table'); }} className="btn btn-ghost">← New Scan</button>
+                <div className="flex gap-2">
+                  {(['json', 'csv'] as const).map(f => <button key={f} onClick={() => exportReport(f)} className="btn btn-ghost">Export {f.toUpperCase()}</button>)}
                 </div>
-              </motion.div>
+              </div>
 
-              {/* Score overview */}
-              <motion.div variants={fadeUp} className="grid grid-cols-12 gap-6 mb-10">
-                {/* Big score ring */}
-                <div className="col-span-12 md:col-span-4 lg:col-span-3 glass-lg shine-top flex flex-col items-center justify-center p-8">
-                  <ScoreRing
-                    score={scan.overallScore}
-                    size={190}
-                    riskLevel={scan.overallRiskLevel}
-                    label="Project Risk"
-                  />
-                  <div className="mt-5 text-center">
-                    <p className="display text-lg" style={{ color: 'var(--text-1)' }}>
-                      {scan.projectName}
-                    </p>
-                    <p className="mono text-[10px] mt-1" style={{ color: 'var(--text-ghost)' }}>
-                      {new Date(scan.timestamp).toLocaleString()}
-                    </p>
+              {/* Score + Stats */}
+              <div className="grid grid-cols-12 gap-5 mb-10">
+                <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
+                  className="col-span-12 md:col-span-4 lg:col-span-3 card-glow">
+                  <div className="bg-[var(--bg-2)] rounded-[17px] flex flex-col items-center justify-center p-8">
+                    <ScoreRing score={scan.overallScore} size={180} riskLevel={scan.overallRiskLevel} label="Risk Score" />
+                    <p className="text-lg font-bold text-white mt-4">{scan.projectName}</p>
+                    <p className="text-xs mt-1" style={{ color: 'var(--text-dim)' }}>{new Date(scan.timestamp).toLocaleString()}</p>
                   </div>
-                </div>
-
-                {/* Stats grid */}
+                </motion.div>
                 <div className="col-span-12 md:col-span-8 lg:col-span-9 grid grid-cols-2 lg:grid-cols-4 gap-3">
-                  <StatCard label="Total Deps" value={scan.totalDependencies} delay={0.1} icon={'\u25a0'} />
-                  <StatCard label="Direct" value={scan.directDependencies} delay={0.15} accent="var(--cyan-1)" icon={'\u2192'} />
-                  <StatCard label="Dev Deps" value={scan.devDependencies} delay={0.2} accent="var(--text-2)" icon={'\u2699'} />
-                  <StatCard
-                    label="Critical"
-                    value={scan.criticalCount}
-                    delay={0.25}
-                    accent={scan.criticalCount > 0 ? '#ff6b6b' : 'var(--green-1)'}
-                    icon={'\u25b2'}
-                  />
-                  <StatCard
-                    label="High Risk"
-                    value={scan.highCount}
-                    delay={0.3}
-                    accent={scan.highCount > 0 ? 'var(--red-1)' : 'var(--green-1)'}
-                    icon={'\u26a0'}
-                  />
-                  <StatCard
-                    label="Medium Risk"
-                    value={scan.mediumCount}
-                    delay={0.35}
-                    accent={scan.mediumCount > 0 ? 'var(--amber-1)' : 'var(--green-1)'}
-                    icon={'\u25cb'}
-                  />
-                  <StatCard label="Low Risk" value={scan.lowCount} delay={0.4} accent="var(--green-1)" icon={'\u2713'} />
-                  <StatCard
-                    label="Vulns"
-                    value={scan.dependencies.reduce((s, d) => s + d.vulnerabilities.length, 0)}
-                    delay={0.45}
-                    accent={scan.dependencies.some(d => d.vulnerabilities.length > 0) ? 'var(--red-1)' : 'var(--green-1)'}
-                    icon={'\u25c6'}
-                  />
+                  <StatCard label="Total" value={scan.totalDependencies} icon="📦" delay={0.05} />
+                  <StatCard label="Direct" value={scan.directDependencies} icon="→" accent="var(--blue)" delay={0.1} />
+                  <StatCard label="Dev" value={scan.devDependencies} icon="⚙" accent="var(--text-2)" delay={0.15} />
+                  <StatCard label="Critical" value={scan.criticalCount} icon="🚨" accent={scan.criticalCount > 0 ? 'var(--rose)' : 'var(--green)'} delay={0.2} />
+                  <StatCard label="High" value={scan.highCount} icon="⚠" accent={scan.highCount > 0 ? 'var(--rose)' : 'var(--green)'} delay={0.25} />
+                  <StatCard label="Medium" value={scan.mediumCount} icon="●" accent={scan.mediumCount > 0 ? 'var(--amber)' : 'var(--green)'} delay={0.3} />
+                  <StatCard label="Low" value={scan.lowCount} icon="✓" accent="var(--green)" delay={0.35} />
+                  <StatCard label="Vulns" value={scan.dependencies.reduce((s, d) => s + d.vulnerabilities.length, 0)} icon="🔒"
+                    accent={scan.dependencies.some(d => d.vulnerabilities.length > 0) ? 'var(--rose)' : 'var(--green)'} delay={0.4} />
                 </div>
-              </motion.div>
+              </div>
 
-              {/* Tab navigation */}
-              <motion.div variants={fadeUp} className="flex items-center gap-1 mb-8 p-1 rounded-xl w-fit glass">
+              {/* Tabs */}
+              <div className="flex gap-1 mb-8 p-1 rounded-xl w-fit" style={{ background: 'var(--bg-2)', border: '1px solid var(--border)' }}>
                 {([
-                  { id: 'table' as Tab, label: 'Dependencies', count: scan.totalDependencies },
-                  { id: 'graph' as Tab, label: 'Graph View', count: null },
-                  { id: 'insights' as Tab, label: 'AI Insights', count: insights.length || null },
-                ]).map(tab => (
-                  <button
-                    key={tab.id}
-                    onClick={() => setActiveTab(tab.id)}
-                    className="relative px-5 py-2.5 rounded-lg mono text-[11px] font-medium transition-all"
-                    style={{
-                      color: activeTab === tab.id ? 'var(--text-1)' : 'var(--text-3)',
-                      background: activeTab === tab.id ? 'var(--panel)' : 'transparent',
-                    }}
-                  >
-                    {activeTab === tab.id && (
-                      <motion.div
-                        layoutId="active-tab-bg"
-                        className="absolute inset-0 rounded-lg"
-                        style={{ background: 'var(--panel)', border: '1px solid var(--border-2)' }}
-                        transition={{ type: 'spring', stiffness: 400, damping: 35 }}
-                      />
-                    )}
-                    <span className="relative z-10">{tab.label}</span>
-                    {tab.count !== null && (
-                      <span className="relative z-10 ml-2 px-1.5 py-0.5 text-[9px] rounded" style={{
-                        background: activeTab === tab.id ? 'var(--cyan-3)' : 'transparent',
-                        color: activeTab === tab.id ? 'var(--cyan-1)' : 'var(--text-3)',
-                      }}>
-                        {tab.count}
-                      </span>
-                    )}
-                    {tab.id === 'insights' && insightsLoading && (
-                      <span className="relative z-10 ml-2">
-                        <span className="inline-flex h-1.5 w-1.5 rounded-full animate-ping" style={{ background: 'var(--cyan-1)' }} />
-                      </span>
-                    )}
+                  { id: 'table' as Tab, label: '📋 Dependencies', count: scan.totalDependencies },
+                  { id: 'graph' as Tab, label: '🕸 Graph' },
+                  { id: 'insights' as Tab, label: '🤖 AI Insights', count: insights.length || undefined },
+                ]).map(t => (
+                  <button key={t.id} onClick={() => setTab(t.id)}
+                    className="relative px-5 h-11 rounded-lg text-sm font-semibold transition-all"
+                    style={{ color: tab === t.id ? 'white' : 'var(--text-3)' }}>
+                    {tab === t.id && <motion.div layoutId="tabBg" className="absolute inset-0 rounded-lg"
+                      style={{ background: 'var(--bg-4)', border: '1px solid var(--border-2)' }}
+                      transition={{ type: 'spring', stiffness: 400, damping: 30 }} />}
+                    <span className="relative z-10 flex items-center gap-2">
+                      {t.label}
+                      {'count' in t && t.count != null && <span className="text-xs px-2 py-0.5 rounded-full"
+                        style={{ background: tab === t.id ? 'rgba(79,143,247,0.1)' : 'transparent', color: tab === t.id ? 'var(--blue)' : 'var(--text-dim)' }}>{t.count}</span>}
+                      {t.id === 'insights' && insightsLoading && <span className="w-2 h-2 rounded-full animate-pulse" style={{ background: 'var(--blue)' }} />}
+                    </span>
                   </button>
                 ))}
-              </motion.div>
+              </div>
 
-              {/* Tab content */}
               <AnimatePresence mode="wait">
-                {activeTab === 'table' && (
-                  <motion.div
-                    key="table"
-                    initial={{ opacity: 0, y: 16, filter: 'blur(4px)' }}
-                    animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-                    exit={{ opacity: 0, y: -16, filter: 'blur(4px)' }}
-                    transition={{ duration: 0.35, ease: [0.25, 0.1, 0.25, 1] }}
-                  >
-                    <DependencyTable dependencies={scan.dependencies} />
-                  </motion.div>
-                )}
-                {activeTab === 'graph' && (
-                  <motion.div
-                    key="graph"
-                    initial={{ opacity: 0, y: 16, filter: 'blur(4px)' }}
-                    animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-                    exit={{ opacity: 0, y: -16, filter: 'blur(4px)' }}
-                    transition={{ duration: 0.35, ease: [0.25, 0.1, 0.25, 1] }}
-                  >
-                    <DependencyGraph tree={scan.tree} />
-                  </motion.div>
-                )}
-                {activeTab === 'insights' && (
-                  <motion.div
-                    key="insights"
-                    initial={{ opacity: 0, y: 16, filter: 'blur(4px)' }}
-                    animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-                    exit={{ opacity: 0, y: -16, filter: 'blur(4px)' }}
-                    transition={{ duration: 0.35, ease: [0.25, 0.1, 0.25, 1] }}
-                  >
-                    <InsightsPanel insights={insights} loading={insightsLoading} />
-                  </motion.div>
-                )}
+                {tab === 'table' && <motion.div key="t" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }}><DependencyTable dependencies={scan.dependencies} /></motion.div>}
+                {tab === 'graph' && <motion.div key="g" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }}><DependencyGraph tree={scan.tree} /></motion.div>}
+                {tab === 'insights' && <motion.div key="i" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }}><InsightsPanel insights={insights} loading={insightsLoading} /></motion.div>}
               </AnimatePresence>
             </motion.div>
           )}
         </AnimatePresence>
       </main>
 
-      {/* Footer */}
-      <footer className="border-t py-5 px-8" style={{ borderColor: 'var(--border-1)' }}>
-        <div className="max-w-[1440px] mx-auto flex items-center justify-between">
-          <span className="mono text-[10px]" style={{ color: 'var(--text-ghost)' }}>
-            DepScope v1.0 &mdash; Dependency Risk Analyzer
-          </span>
-          <span className="mono text-[10px]" style={{ color: 'var(--text-ghost)' }}>
-            AI powered by Llama 3.3 70B via Groq
-          </span>
+      <footer className="border-t py-5 px-6" style={{ borderColor: 'var(--border)' }}>
+        <div className="max-w-6xl mx-auto flex justify-between text-xs" style={{ color: 'var(--text-dim)' }}>
+          <span>DepScope v1.0</span><span>AI powered by Llama 3.3 70B via Groq</span>
         </div>
       </footer>
     </div>

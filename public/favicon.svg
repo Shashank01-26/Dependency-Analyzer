@@ -1,19 +1,47 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
-  <rect width="64" height="64" rx="14" fill="#0a0a0f"/>
-  <rect x="1" y="1" width="62" height="62" rx="13" stroke="url(#g)" stroke-width="2"/>
-  <circle cx="32" cy="30" r="16" stroke="#7dd3fc" stroke-width="2.5" stroke-dasharray="75 25.5" stroke-dashoffset="-12" stroke-linecap="round"/>
-  <circle cx="32" cy="30" r="16" stroke="#7dd3fc" stroke-width="6" stroke-dasharray="75 25.5" stroke-dashoffset="-12" stroke-linecap="round" opacity="0.15"/>
-  <text x="32" y="35" text-anchor="middle" font-family="monospace" font-weight="700" font-size="14" fill="#e0f2fe">DS</text>
-  <rect x="16" y="52" width="32" height="3" rx="1.5" fill="#1e293b"/>
-  <rect x="16" y="52" width="22" height="3" rx="1.5" fill="url(#b)"/>
+  <!-- Dark rounded square base -->
+  <rect width="64" height="64" rx="14" fill="#0c0c0f"/>
+
+  <!-- Shield shape -->
+  <path d="M32 6 L52 16 V34 C52 46 42 54 32 58 C22 54 12 46 12 34 V16 Z"
+        fill="url(#shieldGrad)" stroke="url(#shieldStroke)" stroke-width="1.5"/>
+
+  <!-- Inner shield darker fill -->
+  <path d="M32 10 L48 18.5 V33 C48 43.5 39.5 50 32 53.5 C24.5 50 16 43.5 16 33 V18.5 Z"
+        fill="#0c0c0f" opacity="0.85"/>
+
+  <!-- Dependency tree nodes -->
+  <!-- Root node (top center) -->
+  <circle cx="32" cy="22" r="4" fill="url(#nodeGrad)"/>
+  <!-- Left child -->
+  <circle cx="23" cy="34" r="3" fill="#30d158"/>
+  <!-- Right child -->
+  <circle cx="41" cy="34" r="3" fill="#ff453a"/>
+  <!-- Bottom node -->
+  <circle cx="32" cy="44" r="2.5" fill="#ffd60a"/>
+
+  <!-- Connection lines -->
+  <line x1="32" y1="26" x2="23" y2="31" stroke="#4f8ff7" stroke-width="1.2" opacity="0.7"/>
+  <line x1="32" y1="26" x2="41" y2="31" stroke="#4f8ff7" stroke-width="1.2" opacity="0.7"/>
+  <line x1="23" y1="37" x2="32" y2="41.5" stroke="#4f8ff7" stroke-width="1" opacity="0.5"/>
+  <line x1="41" y1="37" x2="32" y2="41.5" stroke="#4f8ff7" stroke-width="1" opacity="0.5"/>
+
+  <!-- Small pulse ring on root node -->
+  <circle cx="32" cy="22" r="6" fill="none" stroke="#4f8ff7" stroke-width="0.8" opacity="0.3"/>
+
   <defs>
-    <linearGradient id="g" x1="0" y1="0" x2="64" y2="64">
-      <stop stop-color="#7dd3fc" stop-opacity="0.5"/>
-      <stop offset="1" stop-color="#7dd3fc" stop-opacity="0.05"/>
+    <linearGradient id="shieldGrad" x1="12" y1="6" x2="52" y2="58">
+      <stop stop-color="#1a1a2e"/>
+      <stop offset="1" stop-color="#0c0c0f"/>
     </linearGradient>
-    <linearGradient id="b" x1="16" y1="53" x2="38" y2="53">
-      <stop stop-color="#22d3ee"/>
-      <stop offset="1" stop-color="#7dd3fc"/>
+    <linearGradient id="shieldStroke" x1="12" y1="6" x2="52" y2="58">
+      <stop stop-color="#4f8ff7" stop-opacity="0.6"/>
+      <stop offset="0.5" stop-color="#bf5af2" stop-opacity="0.4"/>
+      <stop offset="1" stop-color="#32d6e2" stop-opacity="0.3"/>
+    </linearGradient>
+    <linearGradient id="nodeGrad" x1="28" y1="18" x2="36" y2="26">
+      <stop stop-color="#4f8ff7"/>
+      <stop offset="1" stop-color="#6366f1"/>
     </linearGradient>
   </defs>
 </svg>

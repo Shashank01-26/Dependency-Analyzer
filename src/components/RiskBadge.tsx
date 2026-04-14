@@ -1,27 +1,18 @@
 'use client';
-
 import { RiskLevel } from '@/types';
 
-const STYLES: Record<RiskLevel, { bg: string; text: string; border: string }> = {
-  low: { bg: 'var(--green-3)', text: 'var(--green-1)', border: 'rgba(74,222,128,0.2)' },
-  medium: { bg: 'var(--amber-3)', text: 'var(--amber-1)', border: 'rgba(251,191,36,0.2)' },
-  high: { bg: 'var(--red-3)', text: 'var(--red-1)', border: 'rgba(248,113,113,0.2)' },
-  critical: { bg: 'rgba(255,107,107,0.12)', text: '#ff6b6b', border: 'rgba(255,107,107,0.25)' },
+const S: Record<RiskLevel, { bg: string; color: string }> = {
+  low: { bg: 'rgba(48,209,88,0.12)', color: 'var(--green)' },
+  medium: { bg: 'rgba(255,214,10,0.12)', color: 'var(--amber)' },
+  high: { bg: 'rgba(255,69,58,0.12)', color: 'var(--rose)' },
+  critical: { bg: 'rgba(255,45,85,0.15)', color: '#ff2d55' },
 };
 
-export default function RiskBadge({ level, className = '' }: { level: RiskLevel; className?: string }) {
-  const s = STYLES[level];
+export default function RiskBadge({ level }: { level: RiskLevel; className?: string }) {
+  const s = S[level];
   return (
-    <span
-      className={`inline-flex items-center px-2 py-0.5 rounded-md mono text-[10px] font-semibold uppercase tracking-wider border ${className}`}
-      style={{ background: s.bg, color: s.text, borderColor: s.border }}
-    >
-      {level === 'critical' && (
-        <span className="relative flex h-1.5 w-1.5 mr-1.5">
-          <span className="absolute inline-flex h-full w-full rounded-full opacity-75 animate-ping" style={{ background: s.text }} />
-          <span className="relative inline-flex rounded-full h-1.5 w-1.5" style={{ background: s.text }} />
-        </span>
-      )}
+    <span className="pill" style={{ background: s.bg, color: s.color, textTransform: 'uppercase', fontSize: 11, fontWeight: 700, letterSpacing: '0.04em' }}>
+      {level === 'critical' && <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: s.color }} />}
       {level}
     </span>
   );

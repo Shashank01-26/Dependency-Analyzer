@@ -242,11 +242,11 @@ export default function DependencyGraph({ tree }: { tree: DependencyTreeNode[] }
   const selectedData = selectedNode ? nodeMap.get(selectedNode) : null;
 
   return (
-    <div className="glass-lg shine-top overflow-hidden">
+    <div className="card overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between px-6 py-4 border-b" style={{ borderColor: 'var(--border-1)' }}>
         <div className="flex items-center gap-3">
-          <h3 className="label" style={{ fontSize: 11 }}>Dependency Graph</h3>
+          <h3 className="text-xs font-bold uppercase tracking-wide" style={{ fontSize: 11 }}>Dependency Graph</h3>
           <span className="mono text-[10px]" style={{ color: 'var(--text-ghost)' }}>
             drag to pan &bull; scroll to zoom
           </span>
@@ -427,7 +427,7 @@ export default function DependencyGraph({ tree }: { tree: DependencyTreeNode[] }
             >
               <div className="p-5 w-[260px]">
                 <div className="flex items-center justify-between mb-5">
-                  <span className="label">Node Detail</span>
+                  <span className="text-xs font-bold uppercase tracking-wide">Node Detail</span>
                   <button onClick={() => setSelectedNode(null)} className="mono text-xs" style={{ color: 'var(--text-3)' }}>&times;</button>
                 </div>
                 <div className="mb-5">
@@ -446,14 +446,14 @@ export default function DependencyGraph({ tree }: { tree: DependencyTreeNode[] }
                     { label: 'Connected', value: `${adjacency.get(selectedData.id)?.size || 0} nodes` },
                   ].map(item => (
                     <div key={item.label} className="flex items-center justify-between">
-                      <dt className="label">{item.label}</dt>
+                      <dt className="text-xs font-bold uppercase tracking-wide">{item.label}</dt>
                       <dd className="mono text-[11px] font-medium" style={{ color: 'var(--text-2)' }}>{item.value}</dd>
                     </div>
                   ))}
                 </dl>
                 {adjacency.get(selectedData.id) && (
                   <div className="mt-5 pt-5 border-t" style={{ borderColor: 'var(--border-1)' }}>
-                    <span className="label">Connected</span>
+                    <span className="text-xs font-bold uppercase tracking-wide">Connected</span>
                     <div className="mt-3 space-y-1 max-h-52 overflow-y-auto">
                       {Array.from(adjacency.get(selectedData.id) || []).map(id => {
                         const n = nodeMap.get(id);
