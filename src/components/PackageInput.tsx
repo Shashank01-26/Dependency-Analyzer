@@ -35,25 +35,31 @@ const SAMPLES: Record<Ecosystem, { risky: { label: string; desc: string; data: s
       devDependencies: { "typescript": "^5.5.0", "eslint": "^9.0.0", "vitest": "^2.0.0" } }, null, 2) },
   },
   flutter: {
-    risky: { label: 'High Risk Flutter', desc: 'Stale & low-activity packages', data: `name: legacy_flutter_app
+    risky: { label: 'High Risk Flutter', desc: 'Discontinued, stale & abandoned', data: `name: legacy_flutter_app
 version: 1.0.0
 
 dependencies:
   flutter:
     sdk: flutter
-  http: ^0.13.0
-  sqflite: ^2.0.0
-  fluttertoast: ^8.0.0
-  flutter_spinkit: ^5.1.0
-  cached_network_image: ^3.2.0
-  flutter_html: ^2.2.0
-  carousel_slider: ^4.0.0
+  # Discontinued / very old packages
+  flutter_swiper: ^1.1.6
+  flutter_webview_plugin: ^0.4.0
+  flutter_datetime_picker: ^1.5.1
+  fluttertoast: ^3.1.0
+  progress_dialog: ^1.2.4
+  # Stale / unmaintained
+  flutter_spinkit: ^4.1.0
+  simple_animations: ^1.3.0
+  flutter_slidable: ^0.6.0
+  # Low popularity
+  custom_splash: ^0.0.3
+  shimmer_animation: ^1.0.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  build_runner: ^2.3.0
-  json_serializable: ^6.5.0` },
+  build_runner: ^1.12.0
+  json_serializable: ^4.1.0` },
     safe: { label: 'Low Risk Flutter', desc: 'Popular well-maintained packages', data: `name: modern_flutter_app
 version: 1.0.0
 
@@ -73,25 +79,30 @@ dev_dependencies:
   very_good_analysis: ^6.0.0` },
   },
   android: {
-    risky: { label: 'High Risk Android', desc: 'Outdated libraries & old APIs', data: `plugins {
+    risky: { label: 'High Risk Android', desc: 'Deprecated support libs & old APIs', data: `plugins {
     id 'com.android.application'
-    id 'org.jetbrains.kotlin.android'
 }
 
 android {
     namespace 'com.example.legacyapp'
-    compileSdk 33
+    compileSdk 28
 }
 
 dependencies {
+    // DEPRECATED: Android Support Library (replaced by AndroidX years ago)
     implementation 'com.android.support:appcompat-v7:28.0.0'
     implementation 'com.android.support:design:28.0.0'
-    implementation 'com.squareup.retrofit2:retrofit:2.5.0'
-    implementation 'com.squareup.okhttp3:okhttp:3.12.0'
-    implementation 'com.google.code.gson:gson:2.8.5'
+    implementation 'com.android.support:recyclerview-v7:28.0.0'
+    implementation 'com.android.support:cardview-v7:28.0.0'
+    // Very old versions with known vulnerabilities
+    implementation 'com.squareup.okhttp3:okhttp:3.8.0'
+    implementation 'com.squareup.retrofit2:retrofit:2.3.0'
+    // Abandoned / deprecated libraries
     implementation 'com.jakewharton:butterknife:10.2.3'
-    implementation 'org.greenrobot:eventbus:3.1.1'
-    testImplementation 'junit:junit:4.12'
+    implementation 'org.greenrobot:eventbus:3.0.0'
+    implementation 'com.google.code.gson:gson:2.6.2'
+    // Very old testing
+    testImplementation 'junit:junit:4.10'
 }` },
     safe: { label: 'Low Risk Android', desc: 'Modern Jetpack & KTX libraries', data: `plugins {
     id 'com.android.application'
