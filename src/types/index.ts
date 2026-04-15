@@ -1,8 +1,16 @@
+export type Ecosystem = 'npm' | 'flutter' | 'android';
+
 export interface PackageJson {
   name?: string;
   version?: string;
   dependencies?: Record<string, string>;
   devDependencies?: Record<string, string>;
+}
+
+export interface ParsedInput {
+  ecosystem: Ecosystem;
+  name: string;
+  dependencies: { name: string; version: string; isDev: boolean }[];
 }
 
 export interface NpmPackageMetadata {
@@ -78,6 +86,7 @@ export interface AnalyzedDependency {
 export interface ScanResult {
   id: string;
   timestamp: string;
+  ecosystem: Ecosystem;
   projectName: string;
   overallScore: number;
   overallRiskLevel: RiskLevel;

@@ -61,7 +61,7 @@ export default function Home() {
                 </motion.h2>
                 <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }}
                   className="text-lg" style={{ color: 'var(--text-2)' }}>
-                  Drop your package.json and get a full risk assessment with AI-powered insights.
+                  Scan npm, Flutter, or Android dependencies for risk, vulnerabilities, and AI-powered insights.
                 </motion.p>
               </div>
 
@@ -79,8 +79,8 @@ export default function Home() {
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}
                 className="mt-14 grid grid-cols-1 sm:grid-cols-3 gap-4">
                 {[
-                  { icon: '🎯', title: 'Risk Scoring', desc: 'Weighted composite of 5 signals', color: 'var(--blue)' },
-                  { icon: '🔒', title: 'Vuln Detection', desc: 'Live npm audit + CVE data', color: 'var(--rose)' },
+                  { icon: '📦', title: 'Multi-Ecosystem', desc: 'npm, Flutter & Android support', color: 'var(--blue)' },
+                  { icon: '🔒', title: 'Vuln Detection', desc: 'Registry + CVE scanning', color: 'var(--rose)' },
                   { icon: '🤖', title: 'AI Analysis', desc: 'Llama 3.3 70B insights', color: 'var(--violet)' },
                 ].map((f, i) => (
                   <motion.div key={i} whileHover={{ y: -4, borderColor: 'var(--border-2)' }}
@@ -111,7 +111,12 @@ export default function Home() {
                   <div className="bg-[var(--bg-2)] rounded-[17px] flex flex-col items-center justify-center p-8">
                     <ScoreRing score={scan.overallScore} size={180} riskLevel={scan.overallRiskLevel} label="Risk Score" />
                     <p className="text-lg font-bold text-white mt-4">{scan.projectName}</p>
-                    <p className="text-xs mt-1" style={{ color: 'var(--text-dim)' }}>{new Date(scan.timestamp).toLocaleString()}</p>
+                    <div className="flex items-center justify-center gap-2 mt-2">
+                      <span className="pill !text-[10px]" style={{ background: 'rgba(79,143,247,0.1)', color: 'var(--blue)' }}>
+                        {scan.ecosystem === 'flutter' ? '🐦 Flutter' : scan.ecosystem === 'android' ? '🤖 Android' : '📦 npm'}
+                      </span>
+                      <span className="text-xs" style={{ color: 'var(--text-dim)' }}>{new Date(scan.timestamp).toLocaleString()}</span>
+                    </div>
                   </div>
                 </motion.div>
                 <div className="col-span-12 md:col-span-8 lg:col-span-9 grid grid-cols-2 lg:grid-cols-4 gap-3">
