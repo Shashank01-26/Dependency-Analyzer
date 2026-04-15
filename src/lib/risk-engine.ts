@@ -267,23 +267,24 @@ export function generateFlags(
     });
   }
 
-  // Low popularity
+  // Low popularity — neutral severity (informational, not a danger signal)
   if (score.popularity >= 45) {
     flags.push({
       type: 'low-popularity',
       label: 'Low Popularity',
-      severity: score.popularity >= 60 ? 'high' : 'medium',
+      severity: 'low',
       detail: npm ? `${npm.weeklyDownloads.toLocaleString()} weekly downloads` : 'Unknown download count',
     });
   }
 
   // Single maintainer
   if (npm && npm.maintainers <= 1) {
+    const name = npm.maintainerNames?.[0];
     flags.push({
       type: 'single-maintainer',
-      label: 'Single Maintainer',
+      label: name ? `Maintainer: ${name}` : 'Single Maintainer',
       severity: 'medium',
-      detail: 'Bus factor risk — only 1 maintainer',
+      detail: name ? `Bus factor risk — sole maintainer is "${name}"` : 'Bus factor risk — only 1 maintainer',
     });
   }
 

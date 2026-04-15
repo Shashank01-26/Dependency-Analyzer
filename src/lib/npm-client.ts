@@ -68,6 +68,7 @@ export async function fetchNpmMetadata(packageName: string): Promise<NpmPackageM
       lastPublish: times.modified || times[latestVersion] || new Date().toISOString(),
       created: times.created || new Date().toISOString(),
       maintainers: (data.maintainers || []).length,
+      maintainerNames: (data.maintainers || []).map((m: { name?: string }) => m.name || 'unknown').slice(0, 5),
       weeklyDownloads: downloads.downloads || 0,
       license: latestData.license || data.license || undefined,
       repository,

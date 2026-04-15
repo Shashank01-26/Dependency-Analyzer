@@ -12,6 +12,7 @@ export interface NpmPackageMetadata {
   lastPublish: string;
   created: string;
   maintainers: number;
+  maintainerNames: string[];
   weeklyDownloads: number;
   license?: string;
   repository?: string;

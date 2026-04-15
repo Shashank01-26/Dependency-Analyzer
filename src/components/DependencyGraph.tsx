@@ -233,20 +233,25 @@ export default function DependencyGraph({ tree }: { tree: DependencyTreeNode[] }
               <circle cx={cx} cy={cy} r={outerR} fill="none" stroke="var(--border)" strokeWidth="1" strokeDasharray="2 6" opacity="0.25" />
             )}
 
-            {/* Child links */}
-            {childNodes.map(group => group.children.map((child, j) => (
-              <motion.line
-                key={`link-${group.parent.id}-${child.node.name}`}
-                x1={group.parentPos.x} y1={group.parentPos.y}
-                x2={child.x} y2={child.y}
-                stroke={COLORS[child.node.riskLevel]}
-                strokeWidth={1.5}
-                opacity={0.25}
-                initial={{ pathLength: 0, opacity: 0 }}
-                animate={{ pathLength: 1, opacity: 0.25 }}
-                transition={{ duration: 0.4, delay: j * 0.03 }}
-              />
-            )))}
+            {/* Child links — highlight the hovered child's link */}
+            {childNodes.map(group => {
+              const hovInGroup = group.children.some(c => hovered === c.node.name);
+              return group.children.map((child, j) => {
+                const isThisHov = hovered === child.node.name;
+                return (
+                  <motion.line
+                    key={`link-${group.parent.id}-${child.node.name}`}
+                    x1={group.parentPos.x} y1={group.parentPos.y}
+                    x2={child.x} y2={child.y}
+                    stroke={COLORS[child.node.riskLevel]}
+                    strokeWidth={isThisHov ? 2.5 : 1.5}
+                    initial={{ pathLength: 0, opacity: 0 }}
+                    animate={{ pathLength: 1, opacity: hovInGroup ? (isThisHov ? 0.6 : 0.08) : 0.25 }}
+                    transition={{ duration: 0.4, delay: j * 0.03 }}
+                  />
+                );
+              });
+            })}
 
             {/* Center-to-root links */}
             {rootPositions.map((pos, i) => (
@@ -255,30 +260,45 @@ export default function DependencyGraph({ tree }: { tree: DependencyTreeNode[] }
                 opacity={hovered === roots[i].id ? 0.4 : 0.08} />
             ))}
 
-            {/* Child nodes (outer ring) */}
-            {childNodes.map(group => group.children.map((child, j) => {
-              const color = COLORS[child.node.riskLevel];
-              const isHov = hovered === child.node.name;
-              return (
-                <motion.g key={`child-${group.parent.id}-${child.node.name}`}
-                  initial={{ opacity: 0, scale: 0 }} animate={{ opacity: 1, scale: 1 }}
-                  transition={{ type: 'spring', stiffness: 300, damping: 20, delay: j * 0.04 }}
-                  style={{ transformOrigin: `${child.x}px ${child.y}px` }}
-                  onMouseEnter={() => setHovered(child.node.name)}
-                  onMouseLeave={() => setHovered(null)}>
-                  <circle cx={child.x} cy={child.y} r={13}
-                    fill="var(--bg-2)" stroke={color} strokeWidth={isHov ? 2.5 : 1.5} />
-                  <text x={child.x} y={child.y + 1} textAnchor="middle" dominantBaseline="central"
-                    fill={color} fontSize="8" fontWeight="600" fontFamily="var(--mono)">{child.node.score}</text>
-                  {isHov && (
-                    <text x={child.x} y={child.y + 24} textAnchor="middle"
-                      fill="var(--white)" fontSize="9" fontFamily="var(--sans)" fontWeight="500">
-                      {child.node.name.length > 20 ? child.node.name.slice(0, 18) + '…' : child.node.name}
-                    </text>
-                  )}
-                </motion.g>
-              );
-            }))}
+            {/* Child nodes (outer ring) — highlight hovered, dim rest */}
+            {childNodes.map(group => {
+              // Check if ANY child in this group is hovered
+              const hoveredChildInGroup = group.children.some(c => hovered === c.node.name);
+
+              return group.children.map((child, j) => {
+                const color = COLORS[child.node.riskLevel];
+                const isHov = hovered === child.node.name;
+                // Dim other children when one child is hovered
+                const dimmed = hoveredChildInGroup && !isHov;
+
+                return (
+                  <motion.g key={`child-${group.parent.id}-${child.node.name}`}
+                    initial={{ opacity: 0, scale: 0 }}
+                    animate={{ opacity: dimmed ? 0.25 : 1, scale: isHov ? 1.15 : 1 }}
+                    transition={{ type: 'spring', stiffness: 300, damping: 20, delay: j * 0.04 }}
+                    style={{ transformOrigin: `${child.x}px ${child.y}px` }}
+                    onMouseEnter={() => setHovered(child.node.name)}
+                    onMouseLeave={() => setHovered(null)}>
+                    {/* Highlight glow on hover */}
+                    {isHov && (
+                      <circle cx={child.x} cy={child.y} r={20} fill={SOFT[child.node.riskLevel]} />
+                    )}
+                    <circle cx={child.x} cy={child.y} r={isHov ? 15 : 13}
+                      fill="var(--bg-2)" stroke={color} strokeWidth={isHov ? 3 : 1.5} />
+                    <text x={child.x} y={child.y + 1} textAnchor="middle" dominantBaseline="central"
+                      fill={color} fontSize={isHov ? '10' : '8'} fontWeight="600" fontFamily="var(--mono)">{child.node.score}</text>
+                    {/* Show name on hover */}
+                    {isHov && (
+                      <foreignObject x={child.x - 70} y={child.y + 20} width="140" height="30">
+                        <div style={{ textAlign: 'center', background: 'var(--bg-3)', borderRadius: 6, padding: '2px 8px', border: '1px solid var(--border-2)', fontSize: 10, fontWeight: 600, color: 'var(--white)', fontFamily: 'var(--sans)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          {child.node.name}
+                        </div>
+                      </foreignObject>
+                    )}
+                  </motion.g>
+                );
+              });
+            })}
 
             {/* Root nodes (inner ring) */}
             {roots.map((node, i) => {

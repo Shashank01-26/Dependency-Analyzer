@@ -6,7 +6,16 @@ const ICONS: Record<RiskFlag['type'], string> = {
 };
 
 export default function FlagPill({ flag }: { flag: RiskFlag }) {
-  const color = flag.severity === 'critical' || flag.severity === 'high' ? 'var(--rose)' : flag.severity === 'medium' ? 'var(--amber)' : 'var(--text-3)';
+  // Low-popularity is always neutral, never red
+  const isNeutral = flag.type === 'low-popularity';
+  const color = isNeutral
+    ? 'var(--text-3)'
+    : flag.severity === 'critical' || flag.severity === 'high'
+      ? 'var(--rose)'
+      : flag.severity === 'medium'
+        ? 'var(--amber)'
+        : 'var(--text-3)';
+
   return (
     <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium"
       style={{ background: 'var(--bg)', color, border: '1px solid var(--border)' }} title={flag.detail}>
