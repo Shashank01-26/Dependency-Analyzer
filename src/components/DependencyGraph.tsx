@@ -350,11 +350,21 @@ export default function DependencyGraph({ tree }: { tree: DependencyTreeNode[] }
                     </>
                   )}
 
-                  <text x={lx} y={ly} textAnchor={anchor} dominantBaseline="central"
-                    fill={isHov ? 'var(--white)' : 'var(--text-2)'}
-                    fontSize="11" fontWeight={isHov ? '600' : '500'} fontFamily="var(--sans)">
-                    {node.name.length > 20 ? node.name.slice(0, 18) + '…' : node.name}
-                  </text>
+                  {/* Name label — only on hover to prevent overlap */}
+                  {isHov && (
+                    <foreignObject x={lx - (anchor === 'end' ? 140 : anchor === 'middle' ? 70 : 0)} y={ly - 14} width="140" height="28">
+                      <div style={{
+                        textAlign: anchor === 'end' ? 'right' : anchor === 'middle' ? 'center' : 'left',
+                        background: 'var(--bg-3)', borderRadius: 8, padding: '3px 10px',
+                        border: '1px solid var(--border-2)',
+                        fontSize: 11, fontWeight: 600, color: 'var(--white)', fontFamily: 'var(--sans)',
+                        whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.4)',
+                      }}>
+                        {node.name}
+                      </div>
+                    </foreignObject>
+                  )}
                 </motion.g>
               );
             })}
