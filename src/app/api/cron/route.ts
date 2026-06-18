@@ -3,7 +3,7 @@ import { getServiceClient } from '@/lib/db/supabase';
 import { parseInput } from '@/lib/input-parser';
 import { analyzeInput } from '@/lib/analyzer';
 import { dbSaveScan } from '@/lib/db/scans';
-import { Ecosystem } from '@/types';
+
 
 export const maxDuration = 300;
 
@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
   // Fetch monitors due for scanning
   const { data: monitors, error } = await client
     .from('monitors')
-    .select('id, user_id, repo_url, manifest_path')
+    .select('id, user_id, repo_url, manifest_path, notify_url')
     .or('last_scanned.is.null,last_scanned.lt.' + new Date(Date.now() - 23 * 60 * 60 * 1000).toISOString());
 
   if (error) {

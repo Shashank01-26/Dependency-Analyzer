@@ -2,7 +2,10 @@
 import { RiskFlag } from '@/types';
 
 const ICONS: Record<RiskFlag['type'], string> = {
-  unmaintained: '⚠', vulnerable: '🔥', deprecated: '⛔', 'low-popularity': '↓', 'deep-chain': '🔗', 'single-maintainer': '👤', stale: '⏳',
+  unmaintained: '⚠', vulnerable: '🔥', deprecated: '⛔', 'low-popularity': '↓',
+  'deep-chain': '🔗', 'single-maintainer': '👤', stale: '⏳',
+  typosquatting: '🎭', 'install-script': '⚙', 'ownership-transfer': '🔄',
+  'unpinned-version': '📌', 'license-risk': '⚖',
 };
 
 export default function FlagPill({ flag }: { flag: RiskFlag }) {

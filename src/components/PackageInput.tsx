@@ -167,6 +167,26 @@ export default function PackageInput({ onSubmit, loading }: Props) {
   }, []);
 
   const submit = () => { if (validate(text)) onSubmit(text); };
+
+  const submitGithub = async () => {
+    if (!githubUrl.trim()) return;
+    setFetchingRepo(true);
+    setError(null);
+    try {
+      const res = await fetch('/api/fetch-repo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: githubUrl.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setError(data.error ?? 'Failed to fetch repository'); return; }
+      onSubmit(data.raw, data.ecosystem);
+    } catch {
+      setError('Network error — could not reach the server');
+    } finally {
+      setFetchingRepo(false);
+    }
+  };
   const handleFile = (f: File) => {
     const r = new FileReader();
     r.onload = e => { const c = e.target?.result as string; setText(c); if (validate(c)) onSubmit(c); };
@@ -179,11 +199,11 @@ export default function PackageInput({ onSubmit, loading }: Props) {
     <div className="card overflow-hidden">
       {/* Mode tabs */}
       <div className="flex items-center border-b" style={{ borderColor: 'var(--border)' }}>
-        {(['paste', 'upload'] as const).map(m => (
+        {(['paste', 'upload', 'github'] as const).map(m => (
           <button key={m} onClick={() => setMode(m)}
             className="relative px-6 h-14 text-sm font-semibold transition-colors"
             style={{ color: mode === m ? 'var(--white)' : 'var(--text-3)' }}>
-            {m === 'paste' ? '📋 Paste Code' : '📁 Upload File'}
+            {m === 'paste' ? '📋 Paste Code' : m === 'upload' ? '📁 Upload File' : '🐙 GitHub URL'}
             {mode === m && <motion.div layoutId="itab" className="absolute bottom-0 inset-x-0 h-[3px] rounded-t-full"
               style={{ background: 'linear-gradient(90deg, var(--blue), var(--violet))' }}
               transition={{ type: 'spring', stiffness: 400, damping: 30 }} />}
@@ -261,9 +281,9 @@ export default function PackageInput({ onSubmit, loading }: Props) {
             <motion.div key="p" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
               <textarea rows={10} value={text}
                 onChange={e => { setText(e.target.value); if (error) setError(null); }}
-                placeholder={'Paste your package.json, pubspec.yaml, or build.gradle here...'} className="w-full p-5 resize-y" />
+                placeholder={'Paste your package.json, pubspec.yaml, build.gradle, Cargo.lock, go.mod, requirements.txt...'} className="w-full p-5 resize-y" />
             </motion.div>
-          ) : (
+          ) : mode === 'upload' ? (
             <motion.div key="u" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
               <div onDrop={drop} onDragOver={e => { e.preventDefault(); setDragOver(true); }} onDragLeave={() => setDragOver(false)}
                 onClick={() => fileRef.current?.click()}
@@ -271,11 +291,32 @@ export default function PackageInput({ onSubmit, loading }: Props) {
                 style={{ border: `2px dashed ${dragOver ? 'var(--blue)' : 'var(--border)'}`, background: dragOver ? 'rgba(79,143,247,0.05)' : 'var(--bg)' }}>
                 <div className="text-5xl mb-4 opacity-40">{dragOver ? '📥' : '📁'}</div>
                 <p className="text-base font-medium" style={{ color: 'var(--text-2)' }}>
-                  {dragOver ? 'Drop it here' : 'Drop package.json, pubspec.yaml, or build.gradle'}
+                  {dragOver ? 'Drop it here' : 'Drop any manifest or lock file'}
                 </p>
-                <p className="text-xs mt-2" style={{ color: 'var(--text-dim)' }}>Supports npm, Flutter, and Android</p>
-                <input ref={fileRef} type="file" accept=".json,.yaml,.yml,.gradle" className="hidden"
+                <p className="text-xs mt-2" style={{ color: 'var(--text-dim)' }}>npm, Flutter, Rust, Go, Python, Ruby, .NET, Android</p>
+                <input ref={fileRef} type="file" accept=".json,.yaml,.yml,.gradle,.toml,.lock,.mod,.sum,.txt,.csproj" className="hidden"
                   onChange={e => { if (e.target.files?.[0]) handleFile(e.target.files[0]); }} />
+              </div>
+            </motion.div>
+          ) : (
+            <motion.div key="g" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+              <div className="py-10 px-2 flex flex-col items-center gap-4">
+                <div className="text-5xl opacity-40">🐙</div>
+                <p className="text-base font-medium text-center" style={{ color: 'var(--text-2)' }}>
+                  Paste a GitHub repository URL to auto-fetch its manifest
+                </p>
+                <input
+                  type="url"
+                  value={githubUrl}
+                  onChange={e => { setGithubUrl(e.target.value); setError(null); }}
+                  placeholder="https://github.com/owner/repo"
+                  className="w-full max-w-md px-4 py-3 rounded-lg text-sm"
+                  style={{ background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--white)' }}
+                  onKeyDown={e => { if (e.key === 'Enter') submitGithub(); }}
+                />
+                <p className="text-xs" style={{ color: 'var(--text-dim)' }}>
+                  Auto-detects package.json, Cargo.lock, go.mod, requirements.txt, pubspec.yaml and more
+                </p>
               </div>
             </motion.div>
           )}
@@ -288,10 +329,18 @@ export default function PackageInput({ onSubmit, loading }: Props) {
         )}</AnimatePresence>
 
         <div className="mt-6 flex flex-col sm:flex-row gap-4 items-start sm:items-center">
-          <button onClick={submit} disabled={loading || !text.trim()} className="btn btn-primary w-full sm:w-auto">
-            {loading ? <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />Analyzing...</> : '🔍 Analyze Dependencies'}
-          </button>
-          <span className="text-sm" style={{ color: 'var(--text-3)' }}>Auto-detects npm, Flutter, or Android</span>
+          {mode === 'github' ? (
+            <button onClick={submitGithub} disabled={fetchingRepo || !githubUrl.trim()} className="btn btn-primary w-full sm:w-auto">
+              {fetchingRepo ? <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />Fetching...</> : '🐙 Fetch & Analyze'}
+            </button>
+          ) : (
+            <button onClick={submit} disabled={loading || !text.trim()} className="btn btn-primary w-full sm:w-auto">
+              {loading ? <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />Analyzing...</> : '🔍 Analyze Dependencies'}
+            </button>
+          )}
+          <span className="text-sm" style={{ color: 'var(--text-3)' }}>
+            {mode === 'github' ? 'Supports public GitHub repositories' : 'Auto-detects npm, Flutter, Rust, Go, Python, Ruby, .NET, Android'}
+          </span>
         </div>
       </div>
     </div>

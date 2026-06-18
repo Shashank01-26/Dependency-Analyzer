@@ -92,7 +92,8 @@ function parseFixedIn(vuln: OSVVulnerability): string | undefined {
 function parseNVDUrl(vuln: OSVVulnerability): string | undefined {
   const cveRef = vuln.references?.find(r => r.url.includes('nvd.nist.gov'));
   if (cveRef) return cveRef.url;
-  const cveId = vuln.id.startsWith('CVE-') ? vuln.id : vuln.aliases?.find?.(a => a.startsWith('CVE-'));
+  const aliases = (vuln as unknown as { aliases?: string[] }).aliases;
+  const cveId = vuln.id.startsWith('CVE-') ? vuln.id : aliases?.find((a: string) => a.startsWith('CVE-'));
   if (cveId) return `https://nvd.nist.gov/vuln/detail/${cveId}`;
   return undefined;
 }
