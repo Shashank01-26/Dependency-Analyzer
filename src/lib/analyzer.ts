@@ -11,24 +11,59 @@ import {
 import { fetchNpmMetadata, fetchNpmAudit } from './npm-client';
 import { fetchPubMetadata } from './pub-client';
 import { fetchMavenMetadata } from './maven-client';
+import { fetchPyPIMetadata } from './pypi-client';
+import { fetchCratesMetadata } from './crates-client';
+import { fetchGoMetadata } from './go-client';
+import { fetchGemsMetadata } from './gems-client';
+import { fetchNuGetMetadata } from './nuget-client';
 import { fetchGithubMetadata } from './github-client';
 import { computeRiskScore, getRiskLevel, generateFlags } from './risk-engine';
+import { enrichWithOSV, fetchOSVVulnerabilities } from './osv-client';
+import { detectSupplyChainRisksAsync } from './supply-chain';
+import { classifyLicense } from './license-engine';
 
 const MAX_DEPTH = 3;
 const CONCURRENCY = 5;
 
-/** Fetch metadata from the right registry based on ecosystem. */
 async function fetchMetadata(name: string, ecosystem: Ecosystem): Promise<NpmPackageMetadata | null> {
   switch (ecosystem) {
-    case 'flutter': return fetchPubMetadata(name);
-    case 'android': return fetchMavenMetadata(name);
-    default: return fetchNpmMetadata(name);
+    case 'flutter':  return fetchPubMetadata(name);
+    case 'android':  return fetchMavenMetadata(name);
+    case 'python':   return fetchPyPIMetadata(name);
+    case 'rust':     return fetchCratesMetadata(name);
+    case 'go':       return fetchGoMetadata(name);
+    case 'ruby':     return fetchGemsMetadata(name);
+    case 'dotnet':   return fetchNuGetMetadata(name);
+    default:         return fetchNpmMetadata(name);
   }
 }
 
-/**
- * Run batched async operations with concurrency limit.
- */
+async function fetchVulnerabilities(
+  name: string,
+  version: string,
+  ecosystem: Ecosystem,
+  npmVersion?: string
+): Promise<VulnerabilityInfo[]> {
+  if (ecosystem === 'npm') {
+    try {
+      const rawAudit = await fetchNpmAudit(name, npmVersion || version);
+      const npmVulns: VulnerabilityInfo[] = rawAudit.map(a => ({
+        id: a.id,
+        title: a.title,
+        severity: (['low', 'moderate', 'high', 'critical'].includes(a.severity)
+          ? a.severity
+          : 'moderate') as VulnerabilityInfo['severity'],
+        url: a.url,
+      }));
+      // Enrich npm audit results with OSV data (fixedIn, nvdUrl, cvssVector)
+      return enrichWithOSV(npmVulns, name, npmVersion || version, ecosystem);
+    } catch {
+      return fetchOSVVulnerabilities(name, version, ecosystem);
+    }
+  }
+  return fetchOSVVulnerabilities(name, version, ecosystem);
+}
+
 async function batchAsync<T, R>(
   items: T[],
   concurrency: number,
@@ -43,9 +78,6 @@ async function batchAsync<T, R>(
   return results;
 }
 
-/**
- * Build a dependency tree up to MAX_DEPTH, collecting transitive deps.
- */
 async function buildTree(
   name: string,
   version: string,
@@ -83,9 +115,6 @@ async function buildTree(
   };
 }
 
-/**
- * Analyze a single dependency: fetch metadata, compute score, generate flags.
- */
 async function analyzeDependency(
   name: string,
   version: string,
@@ -95,26 +124,19 @@ async function analyzeDependency(
 ): Promise<AnalyzedDependency> {
   const [npm, treeResult] = await Promise.all([
     fetchMetadata(name, ecosystem),
-    ecosystem === 'npm' ? buildTree(name, version, 1, new Set(visited)) : Promise.resolve({ tree: { name, version, riskLevel: 'low' as const, score: 0, children: [] }, transitiveCount: 0, maxDepth: 1 }),
+    ecosystem === 'npm'
+      ? buildTree(name, version, 1, new Set(visited))
+      : Promise.resolve({ tree: { name, version, riskLevel: 'low' as const, score: 0, children: [] }, transitiveCount: 0, maxDepth: 1 }),
   ]);
 
   const github = await fetchGithubMetadata(npm?.repository);
+  const vulnerabilities = await fetchVulnerabilities(name, version, ecosystem, npm?.version);
 
-  // Fetch vulnerabilities (npm audit only works for npm packages)
-  let vulnerabilities: VulnerabilityInfo[] = [];
-  if (ecosystem === 'npm') {
-    try {
-      const rawAudit = await fetchNpmAudit(name, npm?.version || version);
-      vulnerabilities = rawAudit.map(a => ({
-        id: a.id,
-        title: a.title,
-        severity: (['low', 'moderate', 'high', 'critical'].includes(a.severity)
-          ? a.severity
-          : 'moderate') as VulnerabilityInfo['severity'],
-        url: a.url,
-      }));
-    } catch {}
-  }
+  // Supply chain analysis (runs in parallel with above — cheap, local)
+  const supplyChainFlags = await detectSupplyChainRisksAsync(name, version, npm);
+
+  // License classification
+  const license = npm?.license ? classifyLicense(npm.license) : undefined;
 
   const score = computeRiskScore(
     npm,
@@ -125,9 +147,9 @@ async function analyzeDependency(
   );
 
   const riskLevel = getRiskLevel(score.overall);
-  const flags = generateFlags(npm, github, vulnerabilities, treeResult.maxDepth, score);
+  const baseFlags = generateFlags(npm, github, vulnerabilities, treeResult.maxDepth, score);
+  const flags = [...baseFlags, ...supplyChainFlags];
 
-  // Update tree node scores
   treeResult.tree.score = score.overall;
   treeResult.tree.riskLevel = riskLevel;
 
@@ -144,88 +166,67 @@ async function analyzeDependency(
     depth: treeResult.maxDepth,
     directDeps: Object.keys(npm?.dependencies || {}),
     transitiveCount: treeResult.transitiveCount,
+    license,
   };
 }
 
-/**
- * Main analysis entry point: takes a package.json, returns full scan result.
- */
-export async function analyzePackageJson(input: PackageJson): Promise<ScanResult> {
-  const deps = Object.entries(input.dependencies || {}).map(([name, version]) => ({
-    name,
-    version,
-    isDev: false,
-  }));
-
-  const devDeps = Object.entries(input.devDependencies || {}).map(([name, version]) => ({
-    name,
-    version,
-    isDev: true,
-  }));
-
-  const allDeps = [...deps, ...devDeps];
-  const visited = new Set<string>();
-
-  const analyzed = await batchAsync(allDeps, CONCURRENCY, (dep) =>
-    analyzeDependency(dep.name, dep.version, dep.isDev, visited)
-  );
-
-  // Build top-level tree
-  const tree: DependencyTreeNode[] = analyzed.map((dep) => ({
+function buildTopLevelTree(analyzed: AnalyzedDependency[]): DependencyTreeNode[] {
+  return analyzed.map(dep => ({
     name: dep.name,
     version: dep.version,
     riskLevel: dep.riskLevel,
     score: dep.score.overall,
-    children: dep.directDeps.map((childName) => {
-      const child = analyzed.find((d) => d.name === childName);
+    children: dep.directDeps.map(childName => {
+      const child = analyzed.find(d => d.name === childName);
       return {
         name: childName,
-        version: child?.version || '*',
-        riskLevel: child?.riskLevel || 'low',
-        score: child?.score.overall || 0,
+        version: child?.version ?? '*',
+        riskLevel: child?.riskLevel ?? 'low',
+        score: child?.score.overall ?? 0,
         children: [],
       };
     }),
   }));
+}
 
-  // Compute overall project score (weighted average, critical deps count more)
-  const totalWeight = analyzed.reduce((sum, dep) => {
-    const weight = dep.isDev ? 0.5 : 1;
-    return sum + weight;
-  }, 0);
+function computeProjectScore(analyzed: AnalyzedDependency[]): number {
+  const totalWeight = analyzed.reduce((s, d) => s + (d.isDev ? 0.5 : 1), 0);
+  const weightedSum = analyzed.reduce((s, d) => s + d.score.overall * (d.isDev ? 0.5 : 1), 0);
+  return totalWeight > 0 ? Math.round(weightedSum / totalWeight) : 0;
+}
 
-  const weightedSum = analyzed.reduce((sum, dep) => {
-    const weight = dep.isDev ? 0.5 : 1;
-    return sum + dep.score.overall * weight;
-  }, 0);
+export async function analyzePackageJson(input: PackageJson): Promise<ScanResult> {
+  const deps = Object.entries(input.dependencies || {}).map(([name, version]) => ({ name, version, isDev: false }));
+  const devDeps = Object.entries(input.devDependencies || {}).map(([name, version]) => ({ name, version, isDev: true }));
+  const allDeps = [...deps, ...devDeps];
+  const visited = new Set<string>();
 
-  const overallScore = totalWeight > 0 ? Math.round(weightedSum / totalWeight) : 0;
-  const overallRiskLevel = getRiskLevel(overallScore);
+  const analyzed = await batchAsync(allDeps, CONCURRENCY, dep =>
+    analyzeDependency(dep.name, dep.version, dep.isDev, visited)
+  );
+
+  const overallScore = computeProjectScore(analyzed);
 
   return {
     id: crypto.randomUUID(),
     timestamp: new Date().toISOString(),
+    ecosystem: 'npm',
     projectName: input.name || 'Unknown Project',
     overallScore,
-    overallRiskLevel,
+    overallRiskLevel: getRiskLevel(overallScore),
     totalDependencies: allDeps.length,
     directDependencies: deps.length,
     devDependencies: devDeps.length,
-    criticalCount: analyzed.filter((d) => d.riskLevel === 'critical').length,
-    highCount: analyzed.filter((d) => d.riskLevel === 'high').length,
-    mediumCount: analyzed.filter((d) => d.riskLevel === 'medium').length,
-    lowCount: analyzed.filter((d) => d.riskLevel === 'low').length,
+    criticalCount: analyzed.filter(d => d.riskLevel === 'critical').length,
+    highCount: analyzed.filter(d => d.riskLevel === 'high').length,
+    mediumCount: analyzed.filter(d => d.riskLevel === 'medium').length,
+    lowCount: analyzed.filter(d => d.riskLevel === 'low').length,
     dependencies: analyzed,
-    tree,
-    ecosystem: 'npm',
+    tree: buildTopLevelTree(analyzed),
   };
 }
 
-/**
- * Universal analysis entry point — works with npm, Flutter, and Android.
- */
 export async function analyzeInput(input: ParsedInput): Promise<ScanResult> {
-  // For npm, delegate to existing function for backward compat
   if (input.ecosystem === 'npm') {
     const pkg: PackageJson = {
       name: input.name,
@@ -237,29 +238,14 @@ export async function analyzeInput(input: ParsedInput): Promise<ScanResult> {
     return result;
   }
 
-  // Flutter / Android path
   const visited = new Set<string>();
-  const analyzed = await batchAsync(input.dependencies, CONCURRENCY, (dep) =>
+  const analyzed = await batchAsync(input.dependencies, CONCURRENCY, dep =>
     analyzeDependency(dep.name, dep.version, dep.isDev, visited, input.ecosystem)
   );
 
-  const tree: DependencyTreeNode[] = analyzed.map(dep => ({
-    name: dep.name,
-    version: dep.version,
-    riskLevel: dep.riskLevel,
-    score: dep.score.overall,
-    children: dep.directDeps.map(childName => {
-      const child = analyzed.find(d => d.name === childName);
-      return { name: childName, version: child?.version || '*', riskLevel: child?.riskLevel || 'low', score: child?.score.overall || 0, children: [] };
-    }),
-  }));
-
   const prodDeps = input.dependencies.filter(d => !d.isDev);
   const devDeps = input.dependencies.filter(d => d.isDev);
-
-  const totalWeight = analyzed.reduce((s, d) => s + (d.isDev ? 0.5 : 1), 0);
-  const weightedSum = analyzed.reduce((s, d) => s + d.score.overall * (d.isDev ? 0.5 : 1), 0);
-  const overallScore = totalWeight > 0 ? Math.round(weightedSum / totalWeight) : 0;
+  const overallScore = computeProjectScore(analyzed);
 
   return {
     id: crypto.randomUUID(),
@@ -276,6 +262,6 @@ export async function analyzeInput(input: ParsedInput): Promise<ScanResult> {
     mediumCount: analyzed.filter(d => d.riskLevel === 'medium').length,
     lowCount: analyzed.filter(d => d.riskLevel === 'low').length,
     dependencies: analyzed,
-    tree,
+    tree: buildTopLevelTree(analyzed),
   };
 }
