@@ -8,7 +8,7 @@ interface Props { onSubmit: (raw: string, ecosystem?: Ecosystem) => void; loadin
 
 // ── Samples ──
 
-const SAMPLES: Record<Ecosystem, { risky: { label: string; desc: string; data: string }; safe: { label: string; desc: string; data: string } }> = {
+const SAMPLES: Partial<Record<Ecosystem, { risky: { label: string; desc: string; data: string }; safe: { label: string; desc: string; data: string } }>> = {
   npm: {
     risky: { label: 'High Risk npm', desc: 'Deprecated, vulnerable, unmaintained', data: JSON.stringify({ name: "legacy-danger-zone", version: "1.0.0",
       dependencies: {
@@ -128,15 +128,17 @@ dependencies {
   },
 };
 
-const ECO_META: Record<Ecosystem, { icon: string; label: string; file: string }> = {
+const ECO_META: Partial<Record<Ecosystem, { icon: string; label: string; file: string }>> = {
   npm: { icon: '📦', label: 'npm', file: 'package.json' },
   flutter: { icon: '🐦', label: 'Flutter', file: 'pubspec.yaml' },
   android: { icon: '🤖', label: 'Android', file: 'build.gradle' },
 };
 
 export default function PackageInput({ onSubmit, loading }: Props) {
-  const [mode, setMode] = useState<'paste' | 'upload'>('paste');
+  const [mode, setMode] = useState<'paste' | 'upload' | 'github'>('paste');
   const [text, setText] = useState('');
+  const [githubUrl, setGithubUrl] = useState('');
+  const [fetchingRepo, setFetchingRepo] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -171,7 +173,7 @@ export default function PackageInput({ onSubmit, loading }: Props) {
     r.readAsText(f);
   };
   const drop = (e: React.DragEvent) => { e.preventDefault(); setDragOver(false); if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]); };
-  const loadSample = (eco: Ecosystem, type: 'risky' | 'safe') => { setText(SAMPLES[eco][type].data); setError(null); setMenuOpen(false); };
+  const loadSample = (eco: Ecosystem, type: 'risky' | 'safe') => { const s = SAMPLES[eco]; if (s) { setText(s[type].data); setError(null); setMenuOpen(false); } };
 
   return (
     <div className="card overflow-hidden">
@@ -214,7 +216,7 @@ export default function PackageInput({ onSubmit, loading }: Props) {
                   <button key={eco} onClick={() => setSampleEco(eco)}
                     className="flex-1 py-3 text-xs font-semibold text-center transition-all relative"
                     style={{ color: sampleEco === eco ? 'var(--white)' : 'var(--text-3)' }}>
-                    {ECO_META[eco].icon} {ECO_META[eco].label}
+                    {ECO_META[eco]?.icon} {ECO_META[eco]?.label}
                     {sampleEco === eco && (
                       <motion.div layoutId="sampleTab" className="absolute bottom-0 inset-x-2 h-[2px] rounded-full"
                         style={{ background: 'var(--blue)' }}
@@ -227,7 +229,8 @@ export default function PackageInput({ onSubmit, loading }: Props) {
               {/* Sample options for selected ecosystem */}
               <div>
                 {(['risky', 'safe'] as const).map((type, i) => {
-                  const s = SAMPLES[sampleEco][type];
+                  const s = SAMPLES[sampleEco]?.[type];
+                  if (!s) return null;
                   const isRisky = type === 'risky';
                   return (
                     <button key={type} onClick={() => loadSample(sampleEco, type)}
