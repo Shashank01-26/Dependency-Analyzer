@@ -2,16 +2,21 @@
 @import "tailwindcss";
 
 /* ─────────────────────────────────────────────────────────
-   FROSTED DAYLIGHT — iOS 26 Liquid Glass System
-   Background: #EEF0F7 · Glass: white frosted · Text: deep navy
+   FROSTED DAYLIGHT — macOS / iOS 26 Liquid Glass System
 
-   KEY DESIGN PRINCIPLE:
-   Glass surfaces use white-edge borders (iOS specular highlight effect).
-   Separation from background is achieved via multi-layer box-shadow.
-   Content ON glass is crisp and high-contrast — the glass is STRUCTURAL.
+   The secret: glass looks premium ONLY if the background
+   behind it is vivid and colorful. The backdrop-filter
+   saturate() then picks up those colors, creating the
+   characteristic "color-tinted frosted glass" seen in
+   macOS Control Center, iOS panels, visionOS cards.
+
+   Three layers of glass depth:
+   1. ::before  — gradient border (bright top-left → subtle bottom-right)
+   2. ::after   — inner top sheen (simulates overhead light source)
+   3. box-shadow — elevation system (contact + lift + ambient)
 ───────────────────────────────────────────────────────── */
 :root {
-  --bg: #EEF0F7;
+  --bg: #EAECF5;
 
   /* Primary accent — iOS indigo */
   --accent:       #5E5CE6;
@@ -19,7 +24,7 @@
   --accent-light: #818CF8;
   --accent-sky:   #3B82F6;
   --accent-dim:   rgba(94,92,230,0.12);
-  --accent-glow:  rgba(94,92,230,0.26);
+  --accent-glow:  rgba(94,92,230,0.28);
 
   /* Semantic — iOS system colors */
   --success:  #30C55F;
@@ -28,57 +33,60 @@
   --critical: #C5000A;
 
   /*
-   * Glass surfaces — iOS 26 Liquid Glass
+   * Glass surfaces — macOS Liquid Glass formula
    *
-   * The border is WHITE (not dark). This creates the glass-edge specular
-   * highlight seen in iOS Control Center, Apple Music, Apple Wallet, etc.
-   * The outer separation ring (0.5px dark) lives in box-shadow, not border.
+   * Key: blue-tinted white (NOT pure white) — this lets the
+   * backdrop-filter saturate() create colored glass tints.
+   *
+   * The gradient border and inner sheen are handled by
+   * ::before and ::after pseudo-elements below.
    */
-  --glass:       rgba(255,255,255,0.70);
-  --glass-2:     rgba(255,255,255,0.82);
-  --glass-3:     rgba(255,255,255,0.94);
-  --glass-hover: rgba(255,255,255,0.86);
-  --popover:     rgba(255,255,255,0.97);
+  --glass:       rgba(248,251,255,0.66);
+  --glass-2:     rgba(248,251,255,0.78);
+  --glass-3:     rgba(252,254,255,0.92);
+  --glass-hover: rgba(252,254,255,0.80);
+  --popover:     rgba(252,254,255,0.97);
 
-  /* iOS glass edge — white creates the specular glass-surface look */
-  --glass-border:   rgba(255,255,255,0.72);
-  --glass-border-h: rgba(255,255,255,0.90);
+  /* Base glass border — replaced visually by ::before gradient */
+  --glass-border:   rgba(255,255,255,0.80);
+  --glass-border-h: rgba(255,255,255,0.95);
 
   /*
-   * Multi-layer shadow system (Apple-style elevation):
-   * 1. Inner top specular sheen  — glass catching overhead light
-   * 2. Inner bottom edge         — subtle depth at the bottom
-   * 3. Outer separation ring     — crisp 0.5px for surface definition
-   * 4. Contact shadow            — immediate lift from surface
-   * 5. Main lift shadow          — primary elevation cue
-   * 6. Deep ambient              — room-scale ambient occlusion
+   * Elevation shadow system — Apple design language
+   *
+   * Layer 1: inset top rim — bright specular sheen on the glass top edge
+   * Layer 2: inset top glow — diffuse internal light from above
+   * Layer 3: inset bottom — subtle internal depth at the bottom
+   * Layer 4: outer ring — crisp 0.5px separation from background
+   * Layer 5: contact — immediate proximity to surface
+   * Layer 6: lift — primary elevation cue
+   * Layer 7: ambient — room-scale deep shadow
    */
   --glass-shadow:
-    inset 0 1.5px 0 rgba(255,255,255,0.90),
-    inset 0 -1px 0 rgba(10,8,40,0.03),
-    0 0 0 0.5px rgba(10,8,40,0.09),
+    inset 0 1.5px 0 rgba(255,255,255,0.95),
+    inset 0 10px 22px rgba(255,255,255,0.16),
+    inset 0 -1px 0 rgba(10,8,40,0.04),
+    0 0 0 0.5px rgba(10,8,40,0.08),
     0 2px 6px rgba(10,8,40,0.05),
-    0 8px 24px rgba(10,8,40,0.08),
-    0 20px 48px rgba(10,8,40,0.04);
+    0 10px 30px rgba(10,8,40,0.08),
+    0 36px 80px rgba(10,8,40,0.05);
 
   --glass-shadow-h:
     inset 0 1.5px 0 rgba(255,255,255,1),
-    inset 0 -1px 0 rgba(10,8,40,0.05),
-    0 0 0 0.5px rgba(10,8,40,0.11),
+    inset 0 12px 28px rgba(255,255,255,0.22),
+    inset 0 -1px 0 rgba(10,8,40,0.06),
+    0 0 0 0.5px rgba(10,8,40,0.10),
     0 4px 12px rgba(10,8,40,0.08),
-    0 16px 42px rgba(10,8,40,0.13),
-    0 30px 64px rgba(10,8,40,0.05);
+    0 18px 48px rgba(10,8,40,0.13),
+    0 44px 100px rgba(10,8,40,0.07);
 
   /*
-   * Text hierarchy — WCAG AA compliant on white/glass backgrounds (#EEF0F7 base)
+   * Text hierarchy — WCAG AA compliant on glass (#EAECF5 base)
    *
-   * primary     rgba(10,8,40,0.92) → ~14:1  ✅✅✅ headings, key values
-   * secondary   rgba(10,8,40,0.72) → ~8:1   ✅✅  body text, descriptions
-   * tertiary    rgba(10,8,40,0.52) → ~5.5:1 ✅    labels, captions
-   * quaternary  rgba(10,8,40,0.36) → ~3.8:1 ✓    large decorative hints
-   * dim         rgba(10,8,40,0.22) → ~2.4:1      non-text ornamental only
-   *
-   * Previous values were 0.50/0.30/0.16/0.09 — severe WCAG failures.
+   * primary     rgba(10,8,40,0.92) — ~14:1 ✅✅✅
+   * secondary   rgba(10,8,40,0.72) — ~8:1  ✅✅
+   * tertiary    rgba(10,8,40,0.52) — ~5.5:1 ✅
+   * quaternary  rgba(10,8,40,0.36) — ~3.8:1 ✓ (large text)
    */
   --text-primary:    rgba(10,8,40,0.92);
   --text-secondary:  rgba(10,8,40,0.72);
@@ -90,7 +98,7 @@
   --text:     var(--text-secondary);
   --text-2:   var(--text-tertiary);
   --text-3:   var(--text-quaternary);
-  --text-dim: rgba(10,8,40,0.24);  /* was 0.09 — literally invisible; now decorative minimum */
+  --text-dim: rgba(10,8,40,0.24);
 
   --blue:      var(--accent);
   --violet:    var(--accent-deep);
@@ -145,7 +153,11 @@ body {
 ::-webkit-scrollbar-thumb { background: rgba(94,92,230,0.30); border-radius: 4px; }
 ::-webkit-scrollbar-track { background: rgba(10,8,40,0.04); border-radius: 4px; }
 
-/* ─── BACKGROUND SCENE — atmospheric layered orbs ─── */
+/* ─── BACKGROUND SCENE ─────────────────────────────────────────────────────
+   The background is CRITICAL to glass quality. Vivid, saturated orbs give
+   the backdrop-filter saturate() something to amplify. Faint orbs → white
+   boring glass. Vivid orbs → beautifully colored frosted glass.
+─────────────────────────────────────────────────────────────────────────── */
 .bg-scene {
   position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden;
 }
@@ -153,104 +165,194 @@ body {
   content: '';
   position: absolute; inset: 0;
   background:
-    radial-gradient(ellipse 70% 60% at -6%   -4%,  rgba(99,102,241,0.22), transparent 56%),
-    radial-gradient(ellipse 54% 58% at 108%   8%,  rgba(59,130,246,0.16), transparent 54%),
-    radial-gradient(ellipse 60% 40% at 50%  112%,  rgba(244,114,182,0.10), transparent 50%),
-    radial-gradient(ellipse 40% 44% at 82%   76%,  rgba(52,199,89,0.07),  transparent 52%);
-  animation: orbDrift 32s ease-in-out infinite alternate;
+    /* Main indigo orb — top-left, large */
+    radial-gradient(ellipse 78% 68% at -10%  -8%,  rgba(94,92,230,0.38),  transparent 58%),
+    /* Sapphire orb — top-right */
+    radial-gradient(ellipse 60% 65% at 114%   5%,  rgba(59,130,246,0.30),  transparent 56%),
+    /* Rose orb — bottom-center */
+    radial-gradient(ellipse 64% 46% at 50%  120%,  rgba(244,114,182,0.20), transparent 54%),
+    /* Emerald orb — right side */
+    radial-gradient(ellipse 48% 54% at 88%   82%,  rgba(52,199,89,0.14),   transparent 56%),
+    /* Violet accent — left-mid */
+    radial-gradient(ellipse 38% 44% at 22%   68%,  rgba(168,85,247,0.11),  transparent 54%);
+  animation: orbDrift 34s ease-in-out infinite alternate;
 }
 .bg-scene::after {
   content: '';
   position: absolute; inset: 0;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.034'/%3E%3C/svg%3E");
-  background-size: 200px 200px;
-  opacity: 0.60;
+  /* Fine grain noise adds the frosted-glass texture feel */
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.038'/%3E%3C/svg%3E");
+  background-size: 196px 196px;
+  opacity: 0.65;
+  mix-blend-mode: multiply;
 }
 @keyframes orbDrift {
   0%   { transform: scale(1)    translate(0, 0);         }
-  50%  { transform: scale(1.03) translate(0.8%, 0.5%);   }
-  100% { transform: scale(0.98) translate(-0.5%, 1.2%);  }
+  50%  { transform: scale(1.04) translate(0.8%, 0.6%);   }
+  100% { transform: scale(0.97) translate(-0.6%, 1.3%);  }
 }
 
-/* ─── GLASS CELL — iOS 26 Liquid Glass surface ─── */
+/* ─── GLASS CELL ────────────────────────────────────────────────────────────
+   Three-layer glass construction:
+   ① ::before — gradient border (light catches top-left edge like real glass)
+   ② box-shadow — inner sheen + outer elevation
+   ③ background + backdrop-filter — the frosted glass itself
+─────────────────────────────────────────────────────────────────────────── */
 .glass-cell {
   background: var(--glass);
-  backdrop-filter: blur(52px) saturate(200%) brightness(1.01);
-  -webkit-backdrop-filter: blur(52px) saturate(200%) brightness(1.01);
+  /* High saturation picks up ambient color from the vivid background orbs */
+  backdrop-filter: blur(72px) saturate(260%) brightness(1.02);
+  -webkit-backdrop-filter: blur(72px) saturate(260%) brightness(1.02);
   border-radius: var(--r-xl);
-  border: 1px solid var(--glass-border);
+  border: none; /* visual border handled by ::before gradient */
   box-shadow: var(--glass-shadow);
   position: relative; overflow: hidden;
   transition:
-    background 0.28s ease,
-    border-color 0.28s ease,
-    box-shadow 0.28s ease,
-    transform 0.22s cubic-bezier(0.34, 1.4, 0.64, 1);
+    background 0.30s ease,
+    box-shadow 0.30s ease,
+    transform 0.24s cubic-bezier(0.34, 1.4, 0.64, 1);
 }
+
+/*
+ * ① Gradient border — the defining macOS glass characteristic
+ *
+ * Uses the CSS mask trick to create a 1px border that's a gradient:
+ * - Top-left corner: near-white (where virtual overhead light hits the glass edge)
+ * - Sides: medium brightness
+ * - Bottom-right: subtle (in shadow relative to the light source)
+ *
+ * This creates the "glass catching light" look of real Apple glass surfaces.
+ */
+.glass-cell::before {
+  content: '';
+  position: absolute; inset: 0;
+  border-radius: inherit;
+  padding: 1px; /* border thickness */
+  background: linear-gradient(
+    135deg,
+    rgba(255,255,255,0.96) 0%,
+    rgba(255,255,255,0.62) 20%,
+    rgba(255,255,255,0.22) 55%,
+    rgba(255,255,255,0.46) 100%
+  );
+  /* Mask trick: show only the padding area (the border zone) */
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  z-index: 2;
+}
+
+/*
+ * ② Inner top sheen — simulates overhead ambient light
+ *
+ * Real glass has a diffuse internal glow near the top surface
+ * where light enters. This gradient creates that effect.
+ */
+.glass-cell::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 55%;
+  border-radius: var(--r-xl) var(--r-xl) 100% 100% / var(--r-xl) var(--r-xl) 40px 40px;
+  background: linear-gradient(
+    180deg,
+    rgba(255,255,255,0.26) 0%,
+    rgba(255,255,255,0.08) 40%,
+    transparent 100%
+  );
+  pointer-events: none;
+  z-index: 1;
+}
+
 .glass-cell:hover {
   background: var(--glass-hover);
-  border-color: var(--glass-border-h);
   box-shadow: var(--glass-shadow-h);
   transform: translateY(-2px);
 }
-
-/* Tinted glass variants — pastel washes with colored outer ring */
-.glass-danger {
-  background: rgba(255,246,245,0.84) !important;
-  border-color: rgba(255,255,255,0.72) !important;
-  box-shadow: var(--glass-shadow), 0 0 0 0.5px rgba(255,59,48,0.16) !important;
+.glass-cell:hover::before {
+  background: linear-gradient(
+    135deg,
+    rgba(255,255,255,1)    0%,
+    rgba(255,255,255,0.76) 20%,
+    rgba(255,255,255,0.30) 55%,
+    rgba(255,255,255,0.58) 100%
+  );
 }
-.glass-danger:hover { background: rgba(255,241,240,0.92) !important; }
+
+/* Tinted glass variants */
+.glass-danger {
+  background: rgba(255,244,244,0.72) !important;
+}
+.glass-danger:hover { background: rgba(255,238,238,0.82) !important; }
 
 .glass-safe {
-  background: rgba(244,255,249,0.84) !important;
-  border-color: rgba(255,255,255,0.72) !important;
-  box-shadow: var(--glass-shadow), 0 0 0 0.5px rgba(52,199,89,0.16) !important;
+  background: rgba(240,255,248,0.72) !important;
 }
-.glass-safe:hover { background: rgba(238,255,245,0.92) !important; }
+.glass-safe:hover { background: rgba(232,255,244,0.82) !important; }
 
 .glass-warn {
-  background: rgba(255,253,242,0.84) !important;
-  border-color: rgba(255,255,255,0.72) !important;
-  box-shadow: var(--glass-shadow), 0 0 0 0.5px rgba(255,149,0,0.16) !important;
+  background: rgba(255,252,238,0.72) !important;
 }
 
 .glass-blue {
-  background: rgba(245,246,255,0.88) !important;
-  border-color: rgba(255,255,255,0.72) !important;
-  box-shadow: var(--glass-shadow), 0 0 0 0.5px rgba(94,92,230,0.14) !important;
+  background: rgba(244,245,255,0.72) !important;
 }
 
 .glass-score {
-  background: linear-gradient(148deg, rgba(246,246,255,0.90) 0%, rgba(240,246,255,0.88) 100%) !important;
-  border-color: rgba(255,255,255,0.72) !important;
-  box-shadow: var(--glass-shadow), 0 0 0 0.5px rgba(94,92,230,0.12) !important;
+  background: linear-gradient(148deg, rgba(244,245,255,0.74) 0%, rgba(238,246,255,0.72) 100%) !important;
 }
 
-/* bento-cell — identical to glass-cell (alias preserved for backward compat) */
+/* bento-cell — identical treatment */
 .bento-cell {
   background: var(--glass);
-  backdrop-filter: blur(52px) saturate(200%) brightness(1.01);
-  -webkit-backdrop-filter: blur(52px) saturate(200%) brightness(1.01);
+  backdrop-filter: blur(72px) saturate(260%) brightness(1.02);
+  -webkit-backdrop-filter: blur(72px) saturate(260%) brightness(1.02);
   border-radius: var(--r-xl);
-  border: 1px solid var(--glass-border);
+  border: none;
   box-shadow: var(--glass-shadow);
   position: relative; overflow: hidden;
   transition:
-    background 0.28s ease,
-    border-color 0.28s ease,
-    box-shadow 0.28s ease,
-    transform 0.22s cubic-bezier(0.34, 1.4, 0.64, 1);
+    background 0.30s ease,
+    box-shadow 0.30s ease,
+    transform 0.24s cubic-bezier(0.34, 1.4, 0.64, 1);
+}
+.bento-cell::before {
+  content: '';
+  position: absolute; inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(
+    135deg,
+    rgba(255,255,255,0.96) 0%,
+    rgba(255,255,255,0.62) 20%,
+    rgba(255,255,255,0.22) 55%,
+    rgba(255,255,255,0.46) 100%
+  );
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  z-index: 2;
+}
+.bento-cell::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; height: 55%;
+  border-radius: var(--r-xl) var(--r-xl) 100% 100% / var(--r-xl) var(--r-xl) 40px 40px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.26) 0%, rgba(255,255,255,0.08) 40%, transparent 100%);
+  pointer-events: none;
+  z-index: 1;
 }
 .bento-cell:hover {
   background: var(--glass-hover);
-  border-color: var(--glass-border-h);
   box-shadow: var(--glass-shadow-h);
   transform: translateY(-2px);
 }
 .bento-danger {
-  background: rgba(255,246,245,0.84) !important;
-  box-shadow: var(--glass-shadow), 0 0 0 0.5px rgba(255,59,48,0.16) !important;
+  background: rgba(255,244,244,0.72) !important;
 }
 
 /* ─── GRIDS ─── */
@@ -291,6 +393,8 @@ body {
   gap: 8px; cursor: pointer; border: none;
   font-family: var(--sans); font-weight: 600; letter-spacing: -0.01em;
   transition: all 0.22s ease;
+  position: relative; /* ensure above glass ::after overlays */
+  z-index: 3;
 }
 .btn:focus-visible {
   outline: 2px solid rgba(94,92,230,0.55);
@@ -303,24 +407,24 @@ body {
   color: #fff; border-radius: 14px;
   background: linear-gradient(135deg, #5E5CE6 0%, #4F46E5 100%);
   box-shadow:
-    0 4px 16px rgba(94,92,230,0.34),
+    0 4px 16px rgba(94,92,230,0.36),
     0 1px 4px rgba(94,92,230,0.22),
-    inset 0 1.5px 0 rgba(255,255,255,0.28);
+    inset 0 1.5px 0 rgba(255,255,255,0.30);
 }
 .btn-primary:hover {
-  background: linear-gradient(135deg, #6D6BEA 0%, #5E5CE6 100%);
+  background: linear-gradient(135deg, #6E6CEA 0%, #5E5CE6 100%);
   transform: translateY(-1px);
   box-shadow:
-    0 8px 26px rgba(94,92,230,0.40),
-    0 2px 6px rgba(94,92,230,0.24),
-    inset 0 1.5px 0 rgba(255,255,255,0.32);
+    0 8px 28px rgba(94,92,230,0.42),
+    0 2px 6px rgba(94,92,230,0.26),
+    inset 0 1.5px 0 rgba(255,255,255,0.34);
 }
 .btn-primary:active {
   transform: scale(0.98) translateY(0);
   box-shadow: 0 2px 8px rgba(94,92,230,0.28), inset 0 1px 0 rgba(255,255,255,0.18);
 }
 .btn-primary:disabled {
-  background: rgba(10,8,40,0.08);
+  background: rgba(10,8,40,0.09);
   color: rgba(10,8,40,0.30);
   cursor: not-allowed;
   transform: none;
@@ -329,42 +433,48 @@ body {
 
 .btn-ghost {
   padding: 9px 18px; min-height: 38px; font-size: 13px; border-radius: 12px;
-  background: var(--glass-2);
+  background: rgba(248,251,255,0.72);
   color: var(--text-secondary);
-  border: 1px solid var(--glass-border);
-  box-shadow: var(--glass-shadow);
-  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+  /* Gradient border via box-shadow for ghost buttons */
+  box-shadow:
+    inset 0 1.5px 0 rgba(255,255,255,0.90),
+    0 0 0 0.5px rgba(10,8,40,0.10),
+    0 2px 6px rgba(10,8,40,0.05);
+  backdrop-filter: blur(24px) saturate(200%); -webkit-backdrop-filter: blur(24px) saturate(200%);
 }
 .btn-ghost:hover {
-  background: var(--glass-3);
-  border-color: var(--glass-border-h);
+  background: rgba(252,254,255,0.88);
   color: var(--text-primary);
   transform: translateY(-1px);
-  box-shadow: var(--glass-shadow-h);
+  box-shadow:
+    inset 0 1.5px 0 rgba(255,255,255,1),
+    0 0 0 0.5px rgba(10,8,40,0.12),
+    0 4px 12px rgba(10,8,40,0.09);
 }
 .btn-ghost:active { transform: scale(0.98); }
 
 /* ─── FORMS ─── */
 textarea, input[type="text"], input[type="url"] {
-  background: rgba(255,255,255,0.78);
-  border: 1px solid rgba(255,255,255,0.72);
+  background: rgba(252,254,255,0.72);
+  border: none;
   border-radius: 12px;
   color: var(--text-primary);
   font-family: var(--mono); font-size: 13px; line-height: 1.7;
-  backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(24px) saturate(200%); -webkit-backdrop-filter: blur(24px) saturate(200%);
   box-shadow:
-    inset 0 1.5px 3px rgba(10,8,40,0.04),
+    inset 0 1.5px 0 rgba(255,255,255,0.88),
+    inset 0 2px 6px rgba(10,8,40,0.04),
     0 0 0 0.5px rgba(10,8,40,0.09);
-  transition: border-color 0.22s, box-shadow 0.22s, background 0.22s;
+  transition: box-shadow 0.22s, background 0.22s;
 }
 textarea:focus, input[type="text"]:focus, input[type="url"]:focus {
   outline: none;
-  border-color: rgba(255,255,255,0.90);
-  background: rgba(255,255,255,0.92);
+  background: rgba(255,255,255,0.88);
   box-shadow:
-    inset 0 1px 2px rgba(10,8,40,0.03),
-    0 0 0 0.5px rgba(94,92,230,0.45),
-    0 0 0 3px rgba(94,92,230,0.12);
+    inset 0 1.5px 0 rgba(255,255,255,0.95),
+    inset 0 2px 6px rgba(10,8,40,0.03),
+    0 0 0 0.5px rgba(94,92,230,0.50),
+    0 0 0 3.5px rgba(94,92,230,0.13);
 }
 textarea::placeholder, input::placeholder {
   color: rgba(10,8,40,0.35);
@@ -383,10 +493,21 @@ textarea::placeholder, input::placeholder {
 .card-glow {
   background: var(--glass);
   border-radius: var(--r-xl);
-  border: 1px solid var(--glass-border);
+  border: none;
   box-shadow: var(--glass-shadow);
-  backdrop-filter: blur(52px) saturate(200%);
-  -webkit-backdrop-filter: blur(52px) saturate(200%);
+  backdrop-filter: blur(72px) saturate(260%) brightness(1.02);
+  -webkit-backdrop-filter: blur(72px) saturate(260%) brightness(1.02);
+  position: relative; overflow: hidden;
+}
+.card-glow::before {
+  content: '';
+  position: absolute; inset: 0;
+  border-radius: inherit; padding: 1px;
+  background: linear-gradient(135deg, rgba(255,255,255,0.96) 0%, rgba(255,255,255,0.62) 20%, rgba(255,255,255,0.22) 55%, rgba(255,255,255,0.46) 100%);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none; z-index: 2;
 }
 
 /* ─── ANIMATIONS ─── */

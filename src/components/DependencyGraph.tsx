@@ -200,7 +200,7 @@ export default function DependencyGraph({ tree }: { tree: DependencyTreeNode[] }
         <div
           ref={containerRef}
           className="flex-1 relative overflow-hidden"
-          style={{ background: 'var(--bg)', minHeight: 520, cursor: isPanning ? 'grabbing' : 'grab' }}
+          style={{ background: 'rgba(10,8,40,0.02)', minHeight: 520, cursor: isPanning ? 'grabbing' : 'grab' }}
           onWheel={handleWheel}
           onMouseDown={handleMouseDown}
           onMouseMove={handleMouseMove}

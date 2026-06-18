@@ -10,10 +10,15 @@ export default function Header() {
       transition={{ duration: 0.5, ease: [0.25, 0.1, 0.25, 1] }}
       className="sticky top-0 z-30"
       style={{
-        background: 'rgba(242,242,247,0.82)',
-        backdropFilter: 'blur(36px) saturate(180%)',
-        WebkitBackdropFilter: 'blur(36px) saturate(180%)',
-        borderBottom: '1px solid rgba(0,0,0,0.07)',
+        background: 'rgba(234,238,255,0.72)',
+        backdropFilter: 'blur(64px) saturate(260%) brightness(1.02)',
+        WebkitBackdropFilter: 'blur(64px) saturate(260%) brightness(1.02)',
+        borderBottom: 'none',
+        boxShadow: [
+          'inset 0 -1px 0 rgba(255,255,255,0.45)',
+          '0 1px 0 rgba(10,8,40,0.08)',
+          '0 1px 12px rgba(10,8,40,0.05)',
+        ].join(', '),
       }}
     >
       <div

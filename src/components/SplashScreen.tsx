@@ -44,15 +44,37 @@ export default function SplashScreen({ onComplete }: { onComplete: () => void })
               position: 'relative',
               padding: '48px 56px',
               borderRadius: 32,
-              background: 'rgba(255,255,255,0.86)',
-              backdropFilter: 'blur(48px) saturate(180%)',
-              WebkitBackdropFilter: 'blur(48px) saturate(180%)',
-              border: '1px solid rgba(0,0,0,0.07)',
-              boxShadow: '0 24px 64px rgba(15,10,60,0.12), 0 4px 16px rgba(15,10,60,0.06), inset 0 1px 0 rgba(255,255,255,1)',
+              background: 'rgba(248,251,255,0.68)',
+              backdropFilter: 'blur(72px) saturate(260%) brightness(1.02)',
+              WebkitBackdropFilter: 'blur(72px) saturate(260%) brightness(1.02)',
+              border: 'none',
+              boxShadow: [
+                'inset 0 1.5px 0 rgba(255,255,255,0.95)',
+                'inset 0 10px 22px rgba(255,255,255,0.16)',
+                '0 0 0 0.5px rgba(10,8,40,0.09)',
+                '0 24px 64px rgba(10,8,40,0.14)',
+                '0 6px 18px rgba(10,8,40,0.08)',
+              ].join(', '),
               display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 20,
               minWidth: 280,
+              overflow: 'hidden',
             }}
           >
+            {/* Gradient border overlay — simulates the ::before gradient border trick for inline elements */}
+            <div style={{
+              position: 'absolute', inset: 0, borderRadius: 32, pointerEvents: 'none', zIndex: 10,
+              background: 'linear-gradient(135deg, rgba(255,255,255,0.96) 0%, rgba(255,255,255,0.62) 20%, rgba(255,255,255,0.22) 55%, rgba(255,255,255,0.46) 100%)',
+              WebkitMask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
+              WebkitMaskComposite: 'xor',
+              maskComposite: 'exclude',
+              padding: 1,
+            }} />
+            {/* Inner sheen */}
+            <div style={{
+              position: 'absolute', top: 0, left: 0, right: 0, height: '55%', pointerEvents: 'none', zIndex: 1,
+              borderRadius: '32px 32px 50% 50% / 32px 32px 20px 20px',
+              background: 'linear-gradient(180deg, rgba(255,255,255,0.28) 0%, rgba(255,255,255,0.08) 40%, transparent 100%)',
+            }} />
             {/* Hex prism logo mark */}
             <motion.div
               initial={{ scale: 0, rotate: -30 }}

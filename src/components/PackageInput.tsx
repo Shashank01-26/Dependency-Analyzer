@@ -231,15 +231,21 @@ export default function PackageInput({ onSubmit, loading }: Props) {
               className="fixed z-[70] rounded-2xl overflow-hidden"
               style={{
                 top: menuPos.top, right: menuPos.right, width: 360,
-                background: 'rgba(255,255,255,0.98)',
-                backdropFilter: 'blur(48px) saturate(200%)',
-                WebkitBackdropFilter: 'blur(48px) saturate(200%)',
-                border: '1px solid rgba(0,0,0,0.09)',
-                boxShadow: '0 8px 40px rgba(15,10,60,0.14), 0 2px 8px rgba(15,10,60,0.08), inset 0 1px 0 rgba(255,255,255,1)',
+                background: 'rgba(248,251,255,0.82)',
+                backdropFilter: 'blur(72px) saturate(260%) brightness(1.02)',
+                WebkitBackdropFilter: 'blur(72px) saturate(260%) brightness(1.02)',
+                border: 'none',
+                boxShadow: [
+                  'inset 0 1.5px 0 rgba(255,255,255,0.95)',
+                  'inset 0 8px 18px rgba(255,255,255,0.14)',
+                  '0 0 0 0.5px rgba(10,8,40,0.09)',
+                  '0 8px 32px rgba(10,8,40,0.12)',
+                  '0 24px 60px rgba(10,8,40,0.08)',
+                ].join(', '),
               }}>
 
               {/* Ecosystem tabs */}
-              <div className="flex" style={{ borderBottom: '1px solid rgba(0,0,0,0.07)', background: 'rgba(0,0,0,0.02)' }}>
+              <div className="flex" style={{ borderBottom: '1px solid rgba(10,8,40,0.07)', background: 'rgba(10,8,40,0.025)' }}>
                 {(['npm', 'flutter', 'android'] as Ecosystem[]).map(eco => (
                   <button key={eco} onClick={() => setSampleEco(eco)}
                     className="flex-1 py-3 text-xs font-semibold text-center transition-all relative"
