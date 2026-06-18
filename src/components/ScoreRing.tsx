@@ -2,14 +2,14 @@
 import { motion } from 'framer-motion';
 import { RiskLevel } from '@/types';
 
-const C: Record<RiskLevel, string> = { low: '#34D399', medium: '#FBBF24', high: '#F87171', critical: '#F43F5E' };
+const C: Record<RiskLevel, string> = { low: '#34C759', medium: '#FF9500', high: '#FF3B30', critical: '#D70015' };
 
 export default function ScoreRing({ score, size = 180, riskLevel, label }: { score: number; size?: number; riskLevel: RiskLevel; label?: string }) {
   const r = (size - 14) / 2, c = 2 * Math.PI * r, color = C[riskLevel];
   return (
     <div className="relative inline-flex items-center justify-center" style={{ width: size, height: size }}>
       <svg width={size} height={size} className="-rotate-90">
-        <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="rgba(255,255,255,0.07)" strokeWidth={7} />
+        <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="rgba(15,10,46,0.08)" strokeWidth={7} />
         <motion.circle cx={size/2} cy={size/2} r={r} fill="none" stroke={color} strokeWidth={7} strokeLinecap="round"
           strokeDasharray={c} initial={{ strokeDashoffset: c }}
           animate={{ strokeDashoffset: c - (score / 100) * c }}

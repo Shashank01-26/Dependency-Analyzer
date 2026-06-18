@@ -3,10 +3,10 @@ import { motion } from 'framer-motion';
 import { AIInsight } from '@/types';
 
 const CFG: Record<AIInsight['type'], { icon: string; color: string; bg: string; border: string }> = {
-  summary: { icon: '📊', color: 'var(--blue)', bg: 'rgba(79,143,247,0.08)', border: 'rgba(79,143,247,0.18)' },
-  risk: { icon: '⚠️', color: 'var(--rose)', bg: 'rgba(255,69,58,0.08)', border: 'rgba(255,69,58,0.18)' },
-  recommendation: { icon: '💡', color: 'var(--amber)', bg: 'rgba(255,214,10,0.08)', border: 'rgba(255,214,10,0.18)' },
-  alternative: { icon: '🔄', color: 'var(--green)', bg: 'rgba(48,209,88,0.08)', border: 'rgba(48,209,88,0.18)' },
+  summary:        { icon: '📊', color: 'var(--blue)',  bg: 'rgba(94,92,230,0.07)',  border: 'rgba(94,92,230,0.16)'  },
+  risk:           { icon: '⚠️', color: 'var(--rose)',  bg: 'rgba(255,59,48,0.07)',  border: 'rgba(255,59,48,0.16)'  },
+  recommendation: { icon: '💡', color: 'var(--amber)', bg: 'rgba(255,149,0,0.07)',  border: 'rgba(255,149,0,0.16)'  },
+  alternative:    { icon: '🔄', color: 'var(--green)', bg: 'rgba(52,199,89,0.07)',  border: 'rgba(52,199,89,0.16)'  },
 };
 
 export default function InsightsPanel({ insights, loading }: { insights: AIInsight[]; loading?: boolean }) {
@@ -14,8 +14,8 @@ export default function InsightsPanel({ insights, loading }: { insights: AIInsig
     <div className="card overflow-hidden">
       <div className="flex items-center justify-between px-6 h-16 border-b" style={{ borderColor: 'var(--border)' }}>
         <div className="flex items-center gap-3">
-          <h3 className="text-sm font-bold text-white uppercase tracking-wide">AI Insights</h3>
-          <span className="pill text-xs" style={{ background: 'rgba(191,90,242,0.1)', color: 'var(--violet)' }}>Llama 3.3</span>
+          <h3 className="text-sm font-bold uppercase tracking-wide" style={{ color: 'var(--text-primary)' }}>AI Insights</h3>
+          <span className="pill text-xs" style={{ background: 'rgba(94,92,230,0.09)', color: 'var(--accent)', border: '1px solid rgba(94,92,230,0.18)' }}>Llama 3.3</span>
         </div>
         {loading && <div className="flex items-center gap-2"><span className="w-2.5 h-2.5 rounded-full animate-pulse" style={{ background: 'var(--blue)' }} /><span className="text-sm" style={{ color: 'var(--text-3)' }}>Analyzing...</span></div>}
       </div>
@@ -34,11 +34,11 @@ export default function InsightsPanel({ insights, loading }: { insights: AIInsig
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1.5 flex-wrap">
                     <span className="text-sm font-bold" style={{ color: c.color }}>{ins.title}</span>
-                    {ins.packageName && <span className="text-xs font-medium px-2 py-0.5 rounded-md" style={{ background: 'rgba(0,0,0,0.2)', color: 'var(--text-3)' }}>{ins.packageName}</span>}
+                    {ins.packageName && <span className="text-xs font-medium px-2 py-0.5 rounded-md" style={{ background: 'rgba(15,10,46,0.07)', color: 'var(--text-secondary)' }}>{ins.packageName}</span>}
                   </div>
                   <p className="text-sm leading-relaxed" style={{ color: 'var(--text-2)' }}>{ins.description}</p>
                   {ins.alternative && (
-                    <div className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm" style={{ background: 'rgba(0,0,0,0.15)' }}>
+                    <div className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm" style={{ background: 'rgba(52,199,89,0.09)', border: '1px solid rgba(52,199,89,0.18)' }}>
                       <span className="text-xs uppercase font-bold" style={{ color: 'var(--text-3)' }}>Try:</span>
                       <span className="font-bold" style={{ color: 'var(--green)' }}>{ins.alternative}</span>
                     </div>

@@ -17,20 +17,20 @@ export default function SplashScreen({ onComplete }: { onComplete: () => void })
       {phase !== 'exit' && (
         <motion.div
           className="fixed inset-0 z-[100] flex flex-col items-center justify-center"
-          style={{ background: '#080312' }}
+          style={{ background: '#F2F2F7' }}
           exit={{ opacity: 0, scale: 1.03 }}
           transition={{ duration: 0.5, ease: [0.25, 0.1, 0.25, 1] }}
         >
-          {/* Calm orbs */}
+          {/* Soft orbs */}
           <div className="absolute inset-0 overflow-hidden pointer-events-none">
             <div style={{
               position: 'absolute', width: 700, height: 700, borderRadius: '50%',
-              background: 'radial-gradient(circle, rgba(79,70,229,0.22), transparent 62%)',
+              background: 'radial-gradient(circle, rgba(94,92,230,0.13), transparent 62%)',
               top: -200, left: -180,
             }} />
             <div style={{
               position: 'absolute', width: 500, height: 500, borderRadius: '50%',
-              background: 'radial-gradient(circle, rgba(56,189,248,0.12), transparent 62%)',
+              background: 'radial-gradient(circle, rgba(59,130,246,0.09), transparent 62%)',
               top: -100, right: -150,
             }} />
           </div>
@@ -44,11 +44,11 @@ export default function SplashScreen({ onComplete }: { onComplete: () => void })
               position: 'relative',
               padding: '48px 56px',
               borderRadius: 32,
-              background: 'rgba(10, 9, 22, 0.90)',
+              background: 'rgba(255,255,255,0.86)',
               backdropFilter: 'blur(48px) saturate(180%)',
               WebkitBackdropFilter: 'blur(48px) saturate(180%)',
-              border: '1px solid rgba(255,255,255,0.10)',
-              boxShadow: '0 32px 80px rgba(0,0,0,0.56), 0 0 0 1px rgba(99,102,241,0.10), inset 0 1px 0 rgba(255,255,255,0.09)',
+              border: '1px solid rgba(0,0,0,0.07)',
+              boxShadow: '0 24px 64px rgba(15,10,60,0.12), 0 4px 16px rgba(15,10,60,0.06), inset 0 1px 0 rgba(255,255,255,1)',
               display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 20,
               minWidth: 280,
             }}
@@ -60,34 +60,29 @@ export default function SplashScreen({ onComplete }: { onComplete: () => void })
               transition={{ delay: 0.15, type: 'spring', stiffness: 240, damping: 18 }}
               style={{
                 width: 72, height: 72, borderRadius: 20,
-                background: 'rgba(99,102,241,0.14)',
-                border: '1px solid rgba(129,140,248,0.24)',
-                boxShadow: '0 8px 32px rgba(99,102,241,0.24), inset 0 1px 0 rgba(255,255,255,0.12)',
+                background: 'rgba(94,92,230,0.09)',
+                border: '1px solid rgba(94,92,230,0.18)',
+                boxShadow: '0 8px 32px rgba(94,92,230,0.18), inset 0 1px 0 rgba(255,255,255,1)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
               }}
             >
               <svg viewBox="0 0 40 40" fill="none" width="38" height="38">
                 <defs>
                   <linearGradient id="splHex" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse">
-                    <stop offset="0%"   stopColor="#818CF8" stopOpacity="0.75"/>
-                    <stop offset="100%" stopColor="#60A5FA" stopOpacity="0.60"/>
+                    <stop offset="0%"   stopColor="#5E5CE6" stopOpacity="0.90"/>
+                    <stop offset="100%" stopColor="#3B82F6" stopOpacity="0.75"/>
                   </linearGradient>
                 </defs>
-                {/* Hexagon outline */}
                 <path
                   d="M20 3 L34.5 11.5 L34.5 28.5 L20 37 L5.5 28.5 L5.5 11.5 Z"
-                  stroke="url(#splHex)" strokeWidth="1.5" fill="rgba(99,102,241,0.07)"
+                  stroke="url(#splHex)" strokeWidth="1.5" fill="rgba(94,92,230,0.07)"
                 />
-                {/* Center node */}
-                <circle cx="20" cy="15" r="4.2" fill="#818CF8"/>
-                {/* Halo */}
-                <circle cx="20" cy="15" r="7" stroke="rgba(129,140,248,0.20)" strokeWidth="1" fill="none"/>
-                {/* Leaf nodes */}
-                <circle cx="11.5" cy="28" r="3.2" fill="#F87171"/>
-                <circle cx="28.5" cy="28" r="3.2" fill="#34D399"/>
-                {/* Edges */}
-                <line x1="20" y1="19.2" x2="11.5" y2="24.8" stroke="rgba(255,255,255,0.30)" strokeWidth="1.5"/>
-                <line x1="20" y1="19.2" x2="28.5" y2="24.8" stroke="rgba(255,255,255,0.30)" strokeWidth="1.5"/>
+                <circle cx="20" cy="15" r="4.2" fill="#5E5CE6"/>
+                <circle cx="20" cy="15" r="7" stroke="rgba(94,92,230,0.20)" strokeWidth="1" fill="none"/>
+                <circle cx="11.5" cy="28" r="3.2" fill="#FF3B30"/>
+                <circle cx="28.5" cy="28" r="3.2" fill="#34C759"/>
+                <line x1="20" y1="19.2" x2="11.5" y2="24.8" stroke="rgba(15,10,46,0.22)" strokeWidth="1.5"/>
+                <line x1="20" y1="19.2" x2="28.5" y2="24.8" stroke="rgba(15,10,46,0.22)" strokeWidth="1.5"/>
               </svg>
             </motion.div>
 
@@ -102,9 +97,9 @@ export default function SplashScreen({ onComplete }: { onComplete: () => void })
                 fontFamily: 'var(--sans)', fontWeight: 800, fontSize: 28,
                 letterSpacing: '-0.04em', lineHeight: 1,
               }}>
-                <span style={{ color: 'rgba(255,255,255,0.88)' }}>Dep</span>
+                <span style={{ color: 'rgba(15,10,46,0.82)' }}>Dep</span>
                 <span style={{
-                  background: 'linear-gradient(135deg, #818CF8, #60A5FA)',
+                  background: 'linear-gradient(135deg, #5E5CE6, #3B82F6)',
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor: 'transparent',
                   backgroundClip: 'text',
@@ -112,7 +107,7 @@ export default function SplashScreen({ onComplete }: { onComplete: () => void })
               </p>
               <p style={{
                 fontFamily: 'var(--sans)', fontWeight: 400, fontSize: 13,
-                color: 'rgba(255,255,255,0.36)', marginTop: 7, letterSpacing: '0.01em',
+                color: 'rgba(15,10,46,0.36)', marginTop: 7, letterSpacing: '0.01em',
               }}>
                 Dependency Risk Analyzer
               </p>
@@ -127,7 +122,7 @@ export default function SplashScreen({ onComplete }: { onComplete: () => void })
             >
               <div style={{
                 height: 3, width: '100%', borderRadius: 99,
-                background: 'rgba(255,255,255,0.07)',
+                background: 'rgba(15,10,46,0.07)',
                 overflow: 'hidden',
               }}>
                 <motion.div
@@ -136,8 +131,8 @@ export default function SplashScreen({ onComplete }: { onComplete: () => void })
                   transition={{ delay: 0.5, duration: 1.2, ease: 'easeInOut' }}
                   style={{
                     height: '100%', borderRadius: 99,
-                    background: 'linear-gradient(90deg, #6366F1, #818CF8, #60A5FA)',
-                    boxShadow: '0 0 12px rgba(99,102,241,0.55)',
+                    background: 'linear-gradient(90deg, #5E5CE6, #818CF8, #3B82F6)',
+                    boxShadow: '0 0 12px rgba(94,92,230,0.45)',
                   }}
                 />
               </div>
@@ -152,7 +147,7 @@ export default function SplashScreen({ onComplete }: { onComplete: () => void })
             style={{
               marginTop: 24,
               fontFamily: 'var(--sans)', fontSize: 13, fontWeight: 400,
-              color: 'rgba(255,255,255,0.26)', letterSpacing: '0.02em',
+              color: 'rgba(15,10,46,0.28)', letterSpacing: '0.02em',
             }}
           >
             npm · Rust · Go · Python · Flutter · Android · Ruby · .NET
