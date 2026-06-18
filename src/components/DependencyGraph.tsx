@@ -200,7 +200,11 @@ export default function DependencyGraph({ tree }: { tree: DependencyTreeNode[] }
         <div
           ref={containerRef}
           className="flex-1 relative overflow-hidden"
-          style={{ background: 'rgba(10,8,40,0.02)', minHeight: 520, cursor: isPanning ? 'grabbing' : 'grab' }}
+          style={{
+            background: 'linear-gradient(160deg, rgba(4,3,18,0.82) 0%, rgba(8,6,28,0.88) 100%)',
+            minHeight: 520,
+            cursor: isPanning ? 'grabbing' : 'grab',
+          }}
           onWheel={handleWheel}
           onMouseDown={handleMouseDown}
           onMouseMove={handleMouseMove}
@@ -378,15 +382,15 @@ export default function DependencyGraph({ tree }: { tree: DependencyTreeNode[] }
               initial={{ width: 0, opacity: 0 }} animate={{ width: 280, opacity: 1 }} exit={{ width: 0, opacity: 0 }}
               transition={{ duration: 0.25 }}
               className="overflow-hidden border-l flex-shrink-0"
-              style={{ background: 'var(--bg-2)', borderColor: 'var(--border)' }}>
+              style={{ background: 'rgba(0,0,0,0.30)', borderColor: 'rgba(255,255,255,0.08)', borderLeftWidth: 1, borderLeftStyle: 'solid' }}>
               <div className="p-5 w-[280px]">
                 <div className="flex items-center justify-between mb-4">
-                  <span className="text-xs font-bold uppercase tracking-wide" style={{ color: 'var(--text-3)' }}>Package Detail</span>
-                  <button onClick={() => setSelected(null)} className="text-sm" style={{ color: 'var(--text-3)' }}>✕</button>
+                  <span className="text-xs font-bold uppercase tracking-wide" style={{ color: 'rgba(255,255,255,0.46)', letterSpacing: '0.05em' }}>Package Detail</span>
+                  <button onClick={() => setSelected(null)} className="text-sm" style={{ color: 'rgba(255,255,255,0.40)', background: 'none', border: 'none', cursor: 'pointer' }}>✕</button>
                 </div>
 
                 <div className="mb-5">
-                  <div className="text-base font-bold mb-2" style={{ color: 'var(--text-primary)' }}>{selectedRoot.name}</div>
+                  <div className="text-base font-bold mb-2" style={{ color: 'rgba(255,255,255,0.92)' }}>{selectedRoot.name}</div>
                   <div className="flex items-center gap-3">
                     <span className="pill" style={{ background: SOFT[selectedRoot.riskLevel], color: COLORS[selectedRoot.riskLevel], fontSize: 11, fontWeight: 700, textTransform: 'uppercase' }}>
                       {selectedRoot.riskLevel}
@@ -399,25 +403,25 @@ export default function DependencyGraph({ tree }: { tree: DependencyTreeNode[] }
 
                 <dl className="space-y-3 text-sm">
                   <div className="flex justify-between">
-                    <dt style={{ color: 'var(--text-3)' }}>Direct deps</dt>
-                    <dd className="font-semibold" style={{ color: 'var(--text-2)' }}>{selectedRoot.childCount}</dd>
+                    <dt style={{ color: 'rgba(255,255,255,0.44)' }}>Direct deps</dt>
+                    <dd className="font-semibold" style={{ color: 'rgba(255,255,255,0.80)' }}>{selectedRoot.childCount}</dd>
                   </div>
                   <div className="flex justify-between">
-                    <dt style={{ color: 'var(--text-3)' }}>Depth</dt>
-                    <dd className="font-semibold" style={{ color: 'var(--text-2)' }}>Level {selectedRoot.depth}</dd>
+                    <dt style={{ color: 'rgba(255,255,255,0.44)' }}>Depth</dt>
+                    <dd className="font-semibold" style={{ color: 'rgba(255,255,255,0.80)' }}>Level {selectedRoot.depth}</dd>
                   </div>
                 </dl>
 
                 {selectedRoot.children.length > 0 && (
-                  <div className="mt-5 pt-4 border-t" style={{ borderColor: 'var(--border)' }}>
-                    <div className="text-xs font-bold uppercase tracking-wide mb-3" style={{ color: 'var(--text-3)' }}>
+                  <div className="mt-5 pt-4 border-t" style={{ borderColor: 'rgba(255,255,255,0.10)' }}>
+                    <div className="text-xs font-bold uppercase tracking-wide mb-3" style={{ color: 'rgba(255,255,255,0.46)', letterSpacing: '0.05em' }}>
                       Sub-dependencies ({selectedRoot.children.length})
                     </div>
                     <div className="space-y-1 max-h-64 overflow-y-auto">
                       {selectedRoot.children.map(child => (
                         <div key={child.name} className="flex items-center justify-between px-3 py-2 rounded-lg"
-                          style={{ background: 'var(--bg)' }}>
-                          <span className="text-sm truncate" style={{ color: 'var(--text-2)' }}>{child.name}</span>
+                          style={{ background: 'rgba(255,255,255,0.07)' }}>
+                          <span className="text-sm truncate" style={{ color: 'rgba(255,255,255,0.78)' }}>{child.name}</span>
                           <span className="text-xs font-bold ml-2 shrink-0" style={{ color: COLORS[child.riskLevel] }}>
                             {child.score}
                           </span>

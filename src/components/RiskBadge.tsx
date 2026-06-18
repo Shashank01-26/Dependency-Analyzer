@@ -2,10 +2,10 @@
 import { RiskLevel } from '@/types';
 
 const S: Record<RiskLevel, { bg: string; color: string; border: string }> = {
-  low:      { bg: 'rgba(52,199,89,0.10)',  color: '#30A84A', border: 'rgba(52,199,89,0.22)'  },
-  medium:   { bg: 'rgba(255,149,0,0.10)',  color: '#CC7700', border: 'rgba(255,149,0,0.22)'  },
-  high:     { bg: 'rgba(255,59,48,0.10)',  color: '#D73027', border: 'rgba(255,59,48,0.22)'  },
-  critical: { bg: 'rgba(215,0,21,0.10)',   color: '#A8001A', border: 'rgba(215,0,21,0.24)'   },
+  low:      { bg: 'rgba(52,208,88,0.13)',  color: '#34D058', border: 'rgba(52,208,88,0.26)'  },
+  medium:   { bg: 'rgba(255,179,64,0.13)', color: '#FFB340', border: 'rgba(255,179,64,0.26)' },
+  high:     { bg: 'rgba(255,69,58,0.15)',  color: '#FF453A', border: 'rgba(255,69,58,0.28)'  },
+  critical: { bg: 'rgba(255,45,85,0.15)',  color: '#FF2D55', border: 'rgba(255,45,85,0.30)'  },
 };
 
 export default function RiskBadge({ level }: { level: RiskLevel; className?: string }) {

@@ -10,17 +10,17 @@ interface Props {
 }
 
 const SEVERITY_DOT: Record<string, string> = {
-  critical: '#C5000A',
-  high:     '#D73027',
-  moderate: '#B36200',
-  low:      '#28904A',
+  critical: '#FF2D55',
+  high:     '#FF453A',
+  moderate: '#FFB340',
+  low:      '#34D058',
 };
 
 const SEVERITY_BG: Record<string, string> = {
-  critical: 'rgba(197,0,10,0.10)',
-  high:     'rgba(255,59,48,0.10)',
-  moderate: 'rgba(255,149,0,0.10)',
-  low:      'rgba(52,199,89,0.10)',
+  critical: 'rgba(255,45,85,0.16)',
+  high:     'rgba(255,69,58,0.16)',
+  moderate: 'rgba(255,179,64,0.16)',
+  low:      'rgba(52,208,88,0.14)',
 };
 
 export default function VulnPathModal({ dep, onClose, onSelectVuln }: Props) {
@@ -33,14 +33,14 @@ export default function VulnPathModal({ dep, onClose, onSelectVuln }: Props) {
           {/* Frosted backdrop */}
           <motion.div
             className="fixed inset-0 z-40"
-            style={{ background: 'rgba(10,8,40,0.22)', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)' }}
+            style={{ background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)' }}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
           />
 
-          {/* Modal — iOS glass card */}
+          {/* Dark glass modal */}
           <motion.div
             className="fixed inset-0 z-50 flex items-center justify-center p-4"
             initial={{ opacity: 0, scale: 0.94, y: 12 }}
@@ -51,16 +51,17 @@ export default function VulnPathModal({ dep, onClose, onSelectVuln }: Props) {
             <div
               className="w-full max-w-lg max-h-[80vh] flex flex-col"
               style={{
-                background: 'rgba(246,247,252,0.94)',
-                backdropFilter: 'blur(60px) saturate(200%) brightness(1.01)',
-                WebkitBackdropFilter: 'blur(60px) saturate(200%) brightness(1.01)',
+                background: 'rgba(255,255,255,0.05)',
+                backdropFilter: 'blur(68px) saturate(280%) brightness(0.72)',
+                WebkitBackdropFilter: 'blur(68px) saturate(280%) brightness(0.72)',
                 borderRadius: 24,
-                border: '1px solid rgba(255,255,255,0.72)',
+                border: 'none',
                 boxShadow: [
-                  'inset 0 1.5px 0 rgba(255,255,255,0.92)',
-                  '0 0 0 0.5px rgba(10,8,40,0.09)',
-                  '0 8px 32px rgba(10,8,40,0.12)',
-                  '0 24px 64px rgba(10,8,40,0.08)',
+                  'inset 0 1px 0 rgba(255,255,255,0.12)',
+                  'inset 0 8px 20px rgba(255,255,255,0.03)',
+                  '0 0 0 0.5px rgba(0,0,0,0.70)',
+                  '0 8px 32px rgba(0,0,0,0.55)',
+                  '0 24px 64px rgba(0,0,0,0.40)',
                 ].join(', '),
               }}
               onClick={e => e.stopPropagation()}
@@ -68,7 +69,7 @@ export default function VulnPathModal({ dep, onClose, onSelectVuln }: Props) {
               {/* Header */}
               <div
                 className="flex items-center justify-between p-5"
-                style={{ borderBottom: '1px solid rgba(10,8,40,0.08)' }}
+                style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}
               >
                 <div>
                   <h2 style={{ fontFamily: 'var(--sans)', fontWeight: 700, fontSize: 16, color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>
@@ -83,13 +84,13 @@ export default function VulnPathModal({ dep, onClose, onSelectVuln }: Props) {
                   className="flex items-center justify-center transition-all"
                   style={{
                     width: 30, height: 30, borderRadius: '50%',
-                    background: 'rgba(10,8,40,0.07)',
-                    border: '1px solid rgba(10,8,40,0.09)',
+                    background: 'rgba(255,255,255,0.08)',
+                    border: '1px solid rgba(255,255,255,0.12)',
                     color: 'var(--text-tertiary)',
-                    fontSize: 17,
+                    fontSize: 17, cursor: 'pointer',
                   }}
-                  onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(10,8,40,0.12)'; (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-primary)'; }}
-                  onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(10,8,40,0.07)'; (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-tertiary)'; }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.14)'; (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-primary)'; }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.08)'; (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-tertiary)'; }}
                 >
                   ×
                 </button>
@@ -112,29 +113,29 @@ export default function VulnPathModal({ dep, onClose, onSelectVuln }: Props) {
                       onClick={() => onSelectVuln(vuln)}
                       className="w-full text-left group transition-all"
                       style={{
-                        background: 'rgba(255,255,255,0.68)',
-                        border: '1px solid rgba(255,255,255,0.72)',
+                        background: 'rgba(255,255,255,0.06)',
+                        border: '1px solid rgba(255,255,255,0.10)',
                         borderRadius: 14,
                         padding: '12px 14px',
-                        boxShadow: 'inset 0 1.5px 0 rgba(255,255,255,0.90), 0 0 0 0.5px rgba(10,8,40,0.07)',
+                        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.08), 0 0 0 0.5px rgba(0,0,0,0.30)',
                         transition: 'all 0.18s ease',
+                        cursor: 'pointer',
                       }}
                       onMouseEnter={e => {
                         (e.currentTarget as HTMLButtonElement).style.background = bgColor;
-                        (e.currentTarget as HTMLButtonElement).style.boxShadow = `inset 0 1.5px 0 rgba(255,255,255,0.90), 0 0 0 0.5px ${dotColor}30, 0 4px 12px rgba(10,8,40,0.07)`;
+                        (e.currentTarget as HTMLButtonElement).style.boxShadow = `inset 0 1px 0 rgba(255,255,255,0.10), 0 0 0 0.5px ${dotColor}50, 0 4px 12px rgba(0,0,0,0.30)`;
                         (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(-1px)';
                       }}
                       onMouseLeave={e => {
-                        (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.68)';
-                        (e.currentTarget as HTMLButtonElement).style.boxShadow = 'inset 0 1.5px 0 rgba(255,255,255,0.90), 0 0 0 0.5px rgba(10,8,40,0.07)';
+                        (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.06)';
+                        (e.currentTarget as HTMLButtonElement).style.boxShadow = 'inset 0 1px 0 rgba(255,255,255,0.08), 0 0 0 0.5px rgba(0,0,0,0.30)';
                         (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(0)';
                       }}
                     >
                       <div className="flex items-start gap-3">
-                        {/* Severity dot */}
                         <span
                           className="mt-1 flex-shrink-0 rounded-full"
-                          style={{ width: 8, height: 8, background: dotColor, boxShadow: `0 0 6px ${dotColor}60` }}
+                          style={{ width: 8, height: 8, background: dotColor, boxShadow: `0 0 6px ${dotColor}70` }}
                         />
                         <div className="flex-1 min-w-0">
                           <p style={{ fontFamily: 'var(--sans)', fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -144,15 +145,14 @@ export default function VulnPathModal({ dep, onClose, onSelectVuln }: Props) {
                             {vuln.id}
                           </p>
 
-                          {/* Path if available */}
                           {vuln.path && vuln.path.length > 0 && (
                             <div className="flex flex-wrap items-center gap-1 mt-2">
                               {vuln.path.map((pkg, i) => (
                                 <span key={i} className="flex items-center gap-1">
                                   <span style={{
                                     fontFamily: 'var(--mono)', fontSize: 10, color: 'var(--text-secondary)',
-                                    background: 'rgba(10,8,40,0.05)', padding: '2px 6px', borderRadius: 5,
-                                    border: '1px solid rgba(10,8,40,0.08)',
+                                    background: 'rgba(255,255,255,0.07)', padding: '2px 6px', borderRadius: 5,
+                                    border: '1px solid rgba(255,255,255,0.10)',
                                   }}>
                                     {pkg}
                                   </span>
@@ -166,7 +166,7 @@ export default function VulnPathModal({ dep, onClose, onSelectVuln }: Props) {
 
                           <div className="flex items-center gap-3 mt-2">
                             {vuln.fixedIn && (
-                              <span style={{ fontFamily: 'var(--sans)', fontSize: 11, color: '#28904A', fontWeight: 500 }}>
+                              <span style={{ fontFamily: 'var(--sans)', fontSize: 11, color: '#34D058', fontWeight: 500 }}>
                                 Fix: {vuln.fixedIn}
                               </span>
                             )}
@@ -176,7 +176,7 @@ export default function VulnPathModal({ dep, onClose, onSelectVuln }: Props) {
                               </span>
                             )}
                             <span style={{
-                              fontFamily: 'var(--sans)', fontSize: 11, color: 'var(--accent)', fontWeight: 500,
+                              fontFamily: 'var(--sans)', fontSize: 11, color: 'var(--accent-light)', fontWeight: 500,
                               marginLeft: 'auto', opacity: 0, transition: 'opacity 0.15s',
                             }}
                               className="group-hover:opacity-100"

@@ -10,7 +10,7 @@ export default function MetricBar({ label, value, max = 100, delay = 0 }: { labe
         <span className="font-medium" style={{ color: 'var(--text-3)' }}>{label}</span>
         <span className="font-bold" style={{ color: getColor(value) }}>{value}</span>
       </div>
-      <div className="h-1.5 rounded-full" style={{ background: 'rgba(10,8,40,0.10)' }}>
+      <div className="h-1.5 rounded-full" style={{ background: 'rgba(255,255,255,0.10)' }}>
         <motion.div className="h-full rounded-full" style={{ background: getColor(value) }}
           initial={{ width: 0 }} animate={{ width: `${Math.min((value / max) * 100, 100)}%` }}
           transition={{ duration: 0.8, ease: 'easeOut', delay }} />

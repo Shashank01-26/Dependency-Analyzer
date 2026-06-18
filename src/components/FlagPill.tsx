@@ -9,10 +9,10 @@ const ICONS: Record<RiskFlag['type'], string> = {
 };
 
 const COLORS: Record<string, { color: string; bg: string; border: string }> = {
-  high:    { color: '#D73027', bg: 'rgba(255,59,48,0.09)',  border: 'rgba(255,59,48,0.20)'  },
-  critical:{ color: '#A8001A', bg: 'rgba(215,0,21,0.09)',   border: 'rgba(215,0,21,0.20)'   },
-  medium:  { color: '#CC7700', bg: 'rgba(255,149,0,0.09)',  border: 'rgba(255,149,0,0.20)'  },
-  low:     { color: 'rgba(10,8,40,0.56)',  bg: 'rgba(10,8,40,0.05)', border: 'rgba(10,8,40,0.10)' },
+  high:    { color: '#FF453A', bg: 'rgba(255,69,58,0.14)',  border: 'rgba(255,69,58,0.28)'  },
+  critical:{ color: '#FF2D55', bg: 'rgba(255,45,85,0.14)',  border: 'rgba(255,45,85,0.28)'  },
+  medium:  { color: '#FFB340', bg: 'rgba(255,179,64,0.14)', border: 'rgba(255,179,64,0.28)' },
+  low:     { color: 'rgba(255,255,255,0.56)', bg: 'rgba(255,255,255,0.07)', border: 'rgba(255,255,255,0.14)' },
 };
 
 export default function FlagPill({ flag }: { flag: RiskFlag }) {

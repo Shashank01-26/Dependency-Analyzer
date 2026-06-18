@@ -9,17 +9,17 @@ interface Props {
 }
 
 const SEVERITY_CFG: Record<string, { bg: string; color: string; border: string }> = {
-  critical: { bg: 'rgba(197,0,10,0.08)',  color: '#C5000A', border: 'rgba(197,0,10,0.22)'  },
-  high:     { bg: 'rgba(255,59,48,0.08)', color: '#D73027', border: 'rgba(255,59,48,0.22)' },
-  moderate: { bg: 'rgba(255,149,0,0.08)', color: '#B36200', border: 'rgba(255,149,0,0.22)' },
-  low:      { bg: 'rgba(52,199,89,0.08)', color: '#28904A', border: 'rgba(52,199,89,0.22)' },
+  critical: { bg: 'rgba(255,45,85,0.16)',  color: '#FF2D55', border: 'rgba(255,45,85,0.32)'  },
+  high:     { bg: 'rgba(255,69,58,0.16)',  color: '#FF453A', border: 'rgba(255,69,58,0.32)'  },
+  moderate: { bg: 'rgba(255,179,64,0.16)', color: '#FFB340', border: 'rgba(255,179,64,0.32)' },
+  low:      { bg: 'rgba(52,208,88,0.14)',  color: '#34D058', border: 'rgba(52,208,88,0.28)'  },
 };
 
 function cvssColor(score: number): string {
-  if (score >= 9) return '#C5000A';
-  if (score >= 7) return '#D73027';
-  if (score >= 4) return '#B36200';
-  return '#28904A';
+  if (score >= 9) return '#FF2D55';
+  if (score >= 7) return '#FF453A';
+  if (score >= 4) return '#FFB340';
+  return '#34D058';
 }
 
 export default function CVEDetailDrawer({ vuln, onClose }: Props) {
@@ -27,25 +27,29 @@ export default function CVEDetailDrawer({ vuln, onClose }: Props) {
     <AnimatePresence>
       {vuln && (
         <>
-          {/* Backdrop — frosted, not black */}
+          {/* Backdrop */}
           <motion.div
             className="fixed inset-0 z-40"
-            style={{ background: 'rgba(10,8,40,0.24)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)' }}
+            style={{ background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)' }}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
           />
 
-          {/* Drawer — iOS glass panel */}
+          {/* Dark glass drawer */}
           <motion.aside
             className="fixed right-0 top-0 h-full w-full max-w-md z-50 flex flex-col"
             style={{
-              background: 'rgba(245,246,252,0.94)',
-              backdropFilter: 'blur(60px) saturate(200%) brightness(1.01)',
-              WebkitBackdropFilter: 'blur(60px) saturate(200%) brightness(1.01)',
-              borderLeft: '1px solid rgba(255,255,255,0.70)',
-              boxShadow: '-8px 0 48px rgba(10,8,40,0.14), -2px 0 10px rgba(10,8,40,0.08), inset 1px 0 0 rgba(255,255,255,0.60)',
+              background: 'rgba(8,9,26,0.82)',
+              backdropFilter: 'blur(68px) saturate(280%) brightness(0.80)',
+              WebkitBackdropFilter: 'blur(68px) saturate(280%) brightness(0.80)',
+              borderLeft: 'none',
+              boxShadow: [
+                'inset 1px 0 0 rgba(255,255,255,0.12)',
+                '-8px 0 48px rgba(0,0,0,0.60)',
+                '-2px 0 10px rgba(0,0,0,0.40)',
+              ].join(', '),
             }}
             initial={{ x: '100%' }}
             animate={{ x: 0 }}
@@ -55,10 +59,9 @@ export default function CVEDetailDrawer({ vuln, onClose }: Props) {
             {/* Header */}
             <div
               className="flex items-start justify-between p-5"
-              style={{ borderBottom: '1px solid rgba(10,8,40,0.08)' }}
+              style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}
             >
               <div className="flex-1 min-w-0">
-                {/* Severity badge */}
                 {(() => {
                   const cfg = SEVERITY_CFG[vuln.severity] ?? SEVERITY_CFG.low;
                   return (
@@ -82,13 +85,13 @@ export default function CVEDetailDrawer({ vuln, onClose }: Props) {
                 className="ml-3 flex items-center justify-center flex-shrink-0 transition-all"
                 style={{
                   width: 30, height: 30, borderRadius: '50%',
-                  background: 'rgba(10,8,40,0.07)',
-                  border: '1px solid rgba(10,8,40,0.09)',
+                  background: 'rgba(255,255,255,0.08)',
+                  border: '1px solid rgba(255,255,255,0.12)',
                   color: 'var(--text-tertiary)',
-                  fontSize: 17, lineHeight: 1,
+                  fontSize: 17, lineHeight: 1, cursor: 'pointer',
                 }}
-                onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(10,8,40,0.12)'; (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-primary)'; }}
-                onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(10,8,40,0.07)'; (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-tertiary)'; }}
+                onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.14)'; (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-primary)'; }}
+                onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.08)'; (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-tertiary)'; }}
                 aria-label="Close"
               >
                 ×
@@ -103,9 +106,9 @@ export default function CVEDetailDrawer({ vuln, onClose }: Props) {
                 <div
                   className="rounded-2xl p-4"
                   style={{
-                    background: 'rgba(255,255,255,0.70)',
-                    border: '1px solid rgba(255,255,255,0.72)',
-                    boxShadow: 'inset 0 1.5px 0 rgba(255,255,255,0.90), 0 0 0 0.5px rgba(10,8,40,0.08)',
+                    background: 'rgba(255,255,255,0.07)',
+                    border: '1px solid rgba(255,255,255,0.10)',
+                    boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.10), 0 0 0 0.5px rgba(0,0,0,0.30)',
                   }}
                 >
                   <p style={{ fontFamily: 'var(--sans)', fontSize: 10, fontWeight: 600, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 6 }}>
@@ -127,9 +130,9 @@ export default function CVEDetailDrawer({ vuln, onClose }: Props) {
                 <div
                   className="rounded-2xl p-4"
                   style={{
-                    background: 'rgba(255,255,255,0.70)',
-                    border: '1px solid rgba(255,255,255,0.72)',
-                    boxShadow: 'inset 0 1.5px 0 rgba(255,255,255,0.90), 0 0 0 0.5px rgba(10,8,40,0.08)',
+                    background: 'rgba(255,255,255,0.07)',
+                    border: '1px solid rgba(255,255,255,0.10)',
+                    boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.10), 0 0 0 0.5px rgba(0,0,0,0.30)',
                   }}
                 >
                   <p style={{ fontFamily: 'var(--sans)', fontSize: 10, fontWeight: 600, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 6 }}>
@@ -149,12 +152,12 @@ export default function CVEDetailDrawer({ vuln, onClose }: Props) {
                 <div
                   className="rounded-2xl p-4"
                   style={{
-                    background: 'rgba(244,255,249,0.84)',
-                    border: '1px solid rgba(255,255,255,0.72)',
-                    boxShadow: 'inset 0 1.5px 0 rgba(255,255,255,0.90), 0 0 0 0.5px rgba(52,199,89,0.18)',
+                    background: 'rgba(52,208,88,0.12)',
+                    border: '1px solid rgba(52,208,88,0.24)',
+                    boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.08), 0 0 0 0.5px rgba(52,208,88,0.18)',
                   }}
                 >
-                  <p style={{ fontFamily: 'var(--sans)', fontSize: 10, fontWeight: 600, color: '#28904A', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 6 }}>
+                  <p style={{ fontFamily: 'var(--sans)', fontSize: 10, fontWeight: 600, color: '#34D058', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 6 }}>
                     Fixed In
                   </p>
                   <p style={{ fontFamily: 'var(--mono)', fontSize: 15, fontWeight: 600, color: 'var(--text-primary)' }}>{vuln.fixedIn}</p>
@@ -172,8 +175,8 @@ export default function CVEDetailDrawer({ vuln, onClose }: Props) {
                   </p>
                   <p style={{
                     fontFamily: 'var(--mono)', fontSize: 13, color: 'var(--text-primary)',
-                    background: 'rgba(10,8,40,0.04)', padding: '6px 12px', borderRadius: 8,
-                    display: 'inline-block',
+                    background: 'rgba(255,255,255,0.07)', padding: '6px 12px', borderRadius: 8,
+                    display: 'inline-block', border: '1px solid rgba(255,255,255,0.10)',
                   }}>
                     {vuln.range}
                   </p>
@@ -191,8 +194,8 @@ export default function CVEDetailDrawer({ vuln, onClose }: Props) {
                       <span key={i} className="flex items-center gap-1">
                         <span style={{
                           fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--text-primary)',
-                          background: 'rgba(255,255,255,0.80)', padding: '3px 8px', borderRadius: 6,
-                          border: '1px solid rgba(10,8,40,0.09)',
+                          background: 'rgba(255,255,255,0.08)', padding: '3px 8px', borderRadius: 6,
+                          border: '1px solid rgba(255,255,255,0.12)',
                         }}>
                           {pkg}
                         </span>
@@ -213,7 +216,7 @@ export default function CVEDetailDrawer({ vuln, onClose }: Props) {
                     target="_blank"
                     rel="noopener noreferrer"
                     style={{ display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'var(--sans)', fontSize: 13, color: 'var(--accent)', fontWeight: 500, textDecoration: 'none' }}
-                    onMouseEnter={e => (e.currentTarget.style.color = 'var(--accent-deep)')}
+                    onMouseEnter={e => (e.currentTarget.style.color = 'var(--accent-light)')}
                     onMouseLeave={e => (e.currentTarget.style.color = 'var(--accent)')}
                   >
                     <span style={{ fontSize: 11 }}>↗</span> View on NVD
@@ -225,7 +228,7 @@ export default function CVEDetailDrawer({ vuln, onClose }: Props) {
                     target="_blank"
                     rel="noopener noreferrer"
                     style={{ display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'var(--sans)', fontSize: 13, color: 'var(--accent)', fontWeight: 500, textDecoration: 'none' }}
-                    onMouseEnter={e => (e.currentTarget.style.color = 'var(--accent-deep)')}
+                    onMouseEnter={e => (e.currentTarget.style.color = 'var(--accent-light)')}
                     onMouseLeave={e => (e.currentTarget.style.color = 'var(--accent)')}
                   >
                     <span style={{ fontSize: 11 }}>↗</span> Advisory Details

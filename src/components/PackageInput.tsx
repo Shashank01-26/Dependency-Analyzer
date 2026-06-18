@@ -231,29 +231,29 @@ export default function PackageInput({ onSubmit, loading }: Props) {
               className="fixed z-[70] rounded-2xl overflow-hidden"
               style={{
                 top: menuPos.top, right: menuPos.right, width: 360,
-                background: 'rgba(248,251,255,0.82)',
-                backdropFilter: 'blur(72px) saturate(260%) brightness(1.02)',
-                WebkitBackdropFilter: 'blur(72px) saturate(260%) brightness(1.02)',
+                background: 'rgba(255,255,255,0.055)',
+                backdropFilter: 'blur(68px) saturate(280%) brightness(0.72)',
+                WebkitBackdropFilter: 'blur(68px) saturate(280%) brightness(0.72)',
                 border: 'none',
                 boxShadow: [
-                  'inset 0 1.5px 0 rgba(255,255,255,0.95)',
-                  'inset 0 8px 18px rgba(255,255,255,0.14)',
-                  '0 0 0 0.5px rgba(10,8,40,0.09)',
-                  '0 8px 32px rgba(10,8,40,0.12)',
-                  '0 24px 60px rgba(10,8,40,0.08)',
+                  'inset 0 1px 0 rgba(255,255,255,0.10)',
+                  'inset 0 8px 18px rgba(255,255,255,0.03)',
+                  '0 0 0 0.5px rgba(0,0,0,0.60)',
+                  '0 8px 32px rgba(0,0,0,0.50)',
+                  '0 24px 60px rgba(0,0,0,0.35)',
                 ].join(', '),
               }}>
 
               {/* Ecosystem tabs */}
-              <div className="flex" style={{ borderBottom: '1px solid rgba(10,8,40,0.07)', background: 'rgba(10,8,40,0.025)' }}>
+              <div className="flex" style={{ borderBottom: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.04)' }}>
                 {(['npm', 'flutter', 'android'] as Ecosystem[]).map(eco => (
                   <button key={eco} onClick={() => setSampleEco(eco)}
                     className="flex-1 py-3 text-xs font-semibold text-center transition-all relative"
-                    style={{ color: sampleEco === eco ? 'rgba(10,8,40,0.90)' : 'rgba(10,8,40,0.54)' }}>
+                    style={{ color: sampleEco === eco ? 'rgba(255,255,255,0.90)' : 'rgba(255,255,255,0.46)' }}>
                     {ECO_META[eco]?.icon} {ECO_META[eco]?.label}
                     {sampleEco === eco && (
                       <motion.div layoutId="sampleTab" className="absolute bottom-0 inset-x-2 h-[2px] rounded-full"
-                        style={{ background: 'linear-gradient(90deg, #5E5CE6, #3B82F6)' }}
+                        style={{ background: 'linear-gradient(90deg, #7875FF, #5AABFF)' }}
                         transition={{ type: 'spring', stiffness: 400, damping: 30 }} />
                     )}
                   </button>
@@ -270,17 +270,17 @@ export default function PackageInput({ onSubmit, loading }: Props) {
                     <button key={type} onClick={() => loadSample(sampleEco, type)}
                       className="w-full px-5 py-4 flex items-center gap-3 text-left transition-all"
                       style={{
-                        borderBottom: i === 0 ? '1px solid rgba(0,0,0,0.07)' : undefined,
+                        borderBottom: i === 0 ? '1px solid rgba(255,255,255,0.08)' : undefined,
                       }}
-                      onMouseEnter={e => (e.currentTarget.style.background = 'rgba(0,0,0,0.04)')}
+                      onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.06)')}
                       onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
                       <div className="w-10 h-10 rounded-xl flex items-center justify-center text-lg shrink-0"
-                        style={{ background: isRisky ? 'rgba(255,59,48,0.09)' : 'rgba(52,199,89,0.09)', border: `1px solid ${isRisky ? 'rgba(255,59,48,0.20)' : 'rgba(52,199,89,0.20)'}` }}>
+                        style={{ background: isRisky ? 'rgba(255,69,58,0.14)' : 'rgba(52,208,88,0.12)', border: `1px solid ${isRisky ? 'rgba(255,69,58,0.28)' : 'rgba(52,208,88,0.24)'}` }}>
                         {isRisky ? '⚠️' : '✅'}
                       </div>
                       <div>
-                        <div style={{ fontFamily: 'var(--sans)', fontSize: 13, fontWeight: 600, color: 'rgba(10,8,40,0.90)' }}>{s.label}</div>
-                        <div style={{ fontFamily: 'var(--sans)', fontSize: 11, marginTop: 2, color: 'rgba(10,8,40,0.58)' }}>{s.desc}</div>
+                        <div style={{ fontFamily: 'var(--sans)', fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.88)' }}>{s.label}</div>
+                        <div style={{ fontFamily: 'var(--sans)', fontSize: 11, marginTop: 2, color: 'rgba(255,255,255,0.50)' }}>{s.desc}</div>
                       </div>
                     </button>
                   );
@@ -343,7 +343,7 @@ export default function PackageInput({ onSubmit, loading }: Props) {
         <AnimatePresence>{error && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             className="mt-4 px-4 py-3 rounded-lg text-sm font-medium"
-            style={{ background: 'rgba(255,59,48,0.08)', color: 'var(--danger)', border: '1px solid rgba(255,59,48,0.18)' }}>{error}</motion.div>
+            style={{ background: 'rgba(255,69,58,0.16)', color: 'var(--danger)', border: '1px solid rgba(255,69,58,0.30)' }}>{error}</motion.div>
         )}</AnimatePresence>
 
         <div className="mt-6 flex flex-col sm:flex-row gap-4 items-start sm:items-center">

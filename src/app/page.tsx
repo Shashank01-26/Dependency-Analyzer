@@ -12,14 +12,14 @@ import InsightsPanel from '@/components/InsightsPanel';
 
 type Tab = 'table' | 'graph' | 'insights';
 
-/* ── Risk level → iOS color ── */
+/* ── Risk level → bright iOS color for dark glass ── */
 function riskColor(level: string): string {
-  return ({ critical: '#C5000A', high: '#D73027', medium: '#B36200', low: '#28904A' })[level] ?? 'rgba(10,8,40,0.60)';
+  return ({ critical: '#FF2D55', high: '#FF453A', medium: '#FFB340', low: '#34D058' })[level] ?? 'rgba(255,255,255,0.60)';
 }
 
 /* ── Risk level → glass tint class ── */
 function riskGlass(level: string): string {
-  return ({ critical: 'glass-danger', high: 'glass-warn', medium: 'glass-warn', low: 'glass-safe' })[level] ?? '';
+  return ({ critical: 'glass-danger', high: 'glass-danger', medium: 'glass-warn', low: 'glass-safe' })[level] ?? '';
 }
 
 /* ── Ecosystem display label ── */
@@ -114,7 +114,7 @@ export default function Home() {
                     initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
                     className="glass-cell glass-danger mb-3 flex items-center gap-3 px-5 py-3">
                     <span style={{ fontSize: 16 }}>⚠</span>
-                    <span style={{ fontFamily: 'var(--sans)', fontSize: 14, color: '#FF3B30', fontWeight: 500 }}>
+                    <span style={{ fontFamily: 'var(--sans)', fontSize: 14, color: '#FF453A', fontWeight: 500 }}>
                       {error}
                     </span>
                   </motion.div>
@@ -135,9 +135,9 @@ export default function Home() {
                       <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, marginBottom: 18 }}>
                         <span style={{
                           padding: '4px 14px', borderRadius: 999,
-                          background: 'rgba(94,92,230,0.10)', border: '1px solid rgba(99,102,241,0.22)',
+                          background: 'rgba(124,121,255,0.18)', border: '1px solid rgba(120,117,255,0.32)',
                           fontFamily: 'var(--sans)', fontSize: 12, fontWeight: 600,
-                          color: '#5E5CE6', letterSpacing: '0.01em',
+                          color: '#A5A3FF', letterSpacing: '0.01em',
                         }}>
                           Dependency Intelligence
                         </span>
@@ -145,7 +145,7 @@ export default function Home() {
                       <h1 className="display-heading">
                         Know what<br />
                         <span style={{
-                          background: 'linear-gradient(135deg, #5E5CE6 0%, #6366F1 50%, #60A5FA 100%)',
+                          background: 'linear-gradient(135deg, #9896FF 0%, #7C79FF 45%, #5AABFF 100%)',
                           WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
                           backgroundClip: 'text',
                         }}>
@@ -153,7 +153,7 @@ export default function Home() {
                         </span>
                       </h1>
                       <p style={{
-                        fontFamily: 'var(--sans)', fontSize: 15, color: 'rgba(10,8,40,0.64)',
+                        fontFamily: 'var(--sans)', fontSize: 15, color: 'rgba(255,255,255,0.66)',
                         lineHeight: 1.65, marginTop: 16, maxWidth: 460, fontWeight: 400,
                       }}>
                         Multi-ecosystem scanner across npm, Rust, Go, Python, Flutter, Android,
@@ -179,8 +179,8 @@ export default function Home() {
                     initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: s.delay, ease }}>
                     <span className="cell-label">{s.label}</span>
                     <div>
-                      <span className="cell-number cell-number-md" style={{ color: '#5E5CE6', marginBottom: 6 }}>{s.value}</span>
-                      <span className="cell-label" style={{ color: 'rgba(10,8,40,0.46)' }}>{s.sub}</span>
+                      <span className="cell-number cell-number-md" style={{ color: '#7C79FF', marginBottom: 6 }}>{s.value}</span>
+                      <span className="cell-label" style={{ color: 'rgba(255,255,255,0.42)' }}>{s.sub}</span>
                     </div>
                   </motion.div>
                 ))}
@@ -191,9 +191,9 @@ export default function Home() {
                   initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.28, ease }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
                     <span style={{ fontSize: 15 }}>🔗</span>
-                    <span className="cell-label" style={{ color: 'rgba(129,140,248,0.92)' }}>Supply Chain</span>
+                    <span className="cell-label" style={{ color: 'rgba(168,166,255,0.90)' }}>Supply Chain</span>
                   </div>
-                  <p style={{ fontFamily: 'var(--sans)', fontSize: 13, color: 'rgba(10,8,40,0.60)', lineHeight: 1.65, fontWeight: 400 }}>
+                  <p style={{ fontFamily: 'var(--sans)', fontSize: 13, color: 'rgba(255,255,255,0.60)', lineHeight: 1.65, fontWeight: 400 }}>
                     Typosquatting detection, install-script flags, license compliance,
                     SBOM export (SPDX 2.3 + CycloneDX 1.5), CI policy engine.
                   </p>
@@ -212,8 +212,8 @@ export default function Home() {
                     <div style={{ display: 'flex', gap: 14 }}>
                       <span style={{ fontSize: 22, lineHeight: 1, flexShrink: 0, marginTop: 1 }}>{f.icon}</span>
                       <div>
-                        <p style={{ fontFamily: 'var(--sans)', fontSize: 13, fontWeight: 600, color: 'rgba(10,8,40,0.86)', marginBottom: 6 }}>{f.label}</p>
-                        <p style={{ fontFamily: 'var(--sans)', fontSize: 13, color: 'rgba(10,8,40,0.60)', lineHeight: 1.65, fontWeight: 400 }}>{f.desc}</p>
+                        <p style={{ fontFamily: 'var(--sans)', fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.88)', marginBottom: 6 }}>{f.label}</p>
+                        <p style={{ fontFamily: 'var(--sans)', fontSize: 13, color: 'rgba(255,255,255,0.60)', lineHeight: 1.65, fontWeight: 400 }}>{f.desc}</p>
                       </div>
                     </div>
                   </motion.div>
@@ -258,8 +258,8 @@ export default function Home() {
                     fontFamily: 'var(--sans)', fontSize: 13, fontWeight: 700,
                     color: riskColor(scan.overallRiskLevel), letterSpacing: '0.02em',
                     padding: '5px 16px', borderRadius: 999,
-                    background: `${riskColor(scan.overallRiskLevel)}18`,
-                    border: `1px solid ${riskColor(scan.overallRiskLevel)}30`,
+                    background: `${riskColor(scan.overallRiskLevel)}22`,
+                    border: `1px solid ${riskColor(scan.overallRiskLevel)}40`,
                     textTransform: 'capitalize',
                   }}>
                     {scan.overallRiskLevel} Risk
@@ -278,12 +278,12 @@ export default function Home() {
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
                       <span style={{
                         padding: '5px 14px', borderRadius: 999,
-                        background: 'rgba(99,102,241,0.10)', border: '1px solid rgba(99,102,241,0.20)',
-                        fontFamily: 'var(--sans)', fontSize: 12, fontWeight: 600, color: '#5E5CE6',
+                        background: 'rgba(124,121,255,0.18)', border: '1px solid rgba(120,117,255,0.30)',
+                        fontFamily: 'var(--sans)', fontSize: 12, fontWeight: 600, color: '#A5A3FF',
                       }}>
                         {ecoLabel(scan.ecosystem)}
                       </span>
-                      <span style={{ fontFamily: 'var(--sans)', fontSize: 12, color: 'rgba(10,8,40,0.46)', fontWeight: 400 }}>
+                      <span style={{ fontFamily: 'var(--sans)', fontSize: 12, color: 'rgba(255,255,255,0.44)', fontWeight: 400 }}>
                         {new Date(scan.timestamp).toLocaleString()}
                       </span>
                     </div>
@@ -299,7 +299,7 @@ export default function Home() {
                   </div>
                   <div>
                     <span className="cell-number cell-number-xl"
-                      style={{ color: scan.criticalCount > 0 ? '#D73027' : 'rgba(10,8,40,0.24)' }}>
+                      style={{ color: scan.criticalCount > 0 ? '#FF2D55' : 'rgba(255,255,255,0.22)' }}>
                       {scan.criticalCount}
                     </span>
                     <span className="cell-label" style={{ marginTop: 4 }}>critical risk deps</span>
@@ -309,9 +309,9 @@ export default function Home() {
                 {/* Row 2: stat quartet — col 5-12 */}
                 {[
                   { label: 'Total Deps', value: scan.totalDependencies, color: 'var(--text-primary)', col: '5 / 7' },
-                  { label: 'High Risk',  value: scan.highCount,         color: scan.highCount   > 0 ? '#D73027' : 'rgba(10,8,40,0.30)', col: '7 / 9' },
-                  { label: 'Medium',     value: scan.mediumCount,       color: scan.mediumCount > 0 ? '#B36200' : 'rgba(10,8,40,0.30)', col: '9 / 11' },
-                  { label: 'Low Risk',   value: scan.lowCount,          color: '#34C759',                col: '11 / 13' },
+                  { label: 'High Risk',  value: scan.highCount,   color: scan.highCount   > 0 ? '#FF453A' : 'rgba(255,255,255,0.28)', col: '7 / 9' },
+                  { label: 'Medium',     value: scan.mediumCount, color: scan.mediumCount > 0 ? '#FFB340' : 'rgba(255,255,255,0.28)', col: '9 / 11' },
+                  { label: 'Low Risk',   value: scan.lowCount,    color: '#34D058',                col: '11 / 13' },
                 ].map((m, i) => (
                   <motion.div key={m.label} className="glass-cell"
                     style={{ gridColumn: m.col, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: '18px 22px' }}
@@ -326,8 +326,8 @@ export default function Home() {
                   { label: 'Direct',          value: scan.directDependencies,    col: '1 / 4',   color: 'var(--text-primary)' },
                   { label: 'Dev Deps',        value: scan.devDependencies,       col: '4 / 7',   color: 'var(--text-secondary)' },
                   { label: 'Vulnerabilities', value: scan.dependencies.reduce((s, d) => s + d.vulnerabilities.length, 0),
-                    col: '7 / 10', color: scan.dependencies.some(d => d.vulnerabilities.length > 0) ? '#FF3B30' : '#34C759' },
-                  { label: 'Ecosystem',       value: ecoLabel(scan.ecosystem),   col: '10 / 13', color: '#5E5CE6', mono: true },
+                    col: '7 / 10', color: scan.dependencies.some(d => d.vulnerabilities.length > 0) ? '#FF453A' : '#34D058' },
+                  { label: 'Ecosystem',       value: ecoLabel(scan.ecosystem),   col: '10 / 13', color: '#7C79FF', mono: true },
                 ].map((m, i) => (
                   <motion.div key={m.label} className="glass-cell"
                     style={{ gridColumn: m.col, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 22px' }}
@@ -348,7 +348,7 @@ export default function Home() {
                   initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.46, ease }}>
 
                   {/* iOS-style segment tab bar */}
-                  <div style={{ display: 'flex', alignItems: 'flex-end', borderBottom: '1px solid rgba(0,0,0,0.07)', padding: '0 6px' }}>
+                  <div style={{ display: 'flex', alignItems: 'flex-end', borderBottom: '1px solid rgba(255,255,255,0.08)', padding: '0 6px' }}>
                     {([
                       { id: 'table'    as Tab, label: 'Dependencies',  count: scan.totalDependencies },
                       { id: 'graph'    as Tab, label: 'Graph' },
@@ -360,23 +360,23 @@ export default function Home() {
                           style={{
                             display: 'flex', alignItems: 'center', gap: 8,
                             padding: '14px 20px', background: 'none', border: 'none',
-                            borderBottom: active ? '2px solid #5E5CE6' : '2px solid transparent',
+                            borderBottom: active ? '2px solid #7C79FF' : '2px solid transparent',
                             marginBottom: -1, cursor: 'pointer', transition: 'all 0.2s ease',
                             fontFamily: 'var(--sans)', fontSize: 13, fontWeight: active ? 600 : 500,
                             letterSpacing: '-0.01em',
-                            color: active ? '#5E5CE6' : 'rgba(10,8,40,0.54)',
+                            color: active ? '#A5A3FF' : 'rgba(255,255,255,0.44)',
                           }}>
                           {t.label}
                           {t.count != null && (
                             <span style={{
                               fontFamily: 'var(--sans)', fontSize: 11, fontWeight: 600,
                               padding: '2px 8px', borderRadius: 999,
-                              background: active ? 'rgba(94,92,230,0.10)' : 'rgba(0,0,0,0.05)',
-                              color: active ? '#5E5CE6' : 'rgba(10,8,40,0.44)',
+                              background: active ? 'rgba(120,117,255,0.20)' : 'rgba(255,255,255,0.07)',
+                              color: active ? '#A5A3FF' : 'rgba(255,255,255,0.40)',
                             }}>{t.count}</span>
                           )}
                           {t.pulsing && (
-                            <span className="live-dot" style={{ width: 6, height: 6, borderRadius: '50%', background: '#5E5CE6', flexShrink: 0 }} />
+                            <span className="live-dot" style={{ width: 6, height: 6, borderRadius: '50%', background: '#7C79FF', flexShrink: 0 }} />
                           )}
                         </button>
                       );
@@ -412,11 +412,11 @@ export default function Home() {
       {/* Footer */}
       <footer style={{
         position: 'relative', zIndex: 10, marginTop: 32,
-        borderTop: '1px solid rgba(0,0,0,0.07)', padding: '14px 24px',
+        borderTop: '1px solid rgba(255,255,255,0.08)', padding: '14px 24px',
       }}>
         <div style={{
           maxWidth: 1440, margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-          fontFamily: 'var(--sans)', fontSize: 12, color: 'rgba(10,8,40,0.44)', fontWeight: 400,
+          fontFamily: 'var(--sans)', fontSize: 12, color: 'rgba(255,255,255,0.40)', fontWeight: 400,
         }}>
           <span>DepScope v2.0</span>
           <span>AI: Llama 3.3 70B · Groq · OSV · npm audit</span>

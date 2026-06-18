@@ -1,123 +1,98 @@
 @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&display=swap');
 @import "tailwindcss";
 
-/* ─────────────────────────────────────────────────────────
-   FROSTED DAYLIGHT — macOS / iOS 26 Liquid Glass System
+/* ═══════════════════════════════════════════════════════════════════
+   OBSIDIAN GLASS  ·  Dark macOS-style design system
+   ═══════════════════════════════════════════════════════════════════
 
-   The secret: glass looks premium ONLY if the background
-   behind it is vivid and colorful. The backdrop-filter
-   saturate() then picks up those colors, creating the
-   characteristic "color-tinted frosted glass" seen in
-   macOS Control Center, iOS panels, visionOS cards.
+   Philosophy:
+   · Deep #08091A navy-black canvas with vivid ambient orbs
+   · Glass panels absorb orb colors via saturate(280%) backdrop
+   · brightness(0.72) keeps panels dark while retaining the color
+   · White text hierarchy for perfect WCAG contrast on dark bg
+   · iOS system colors at full saturation for semantic meaning
 
-   Three layers of glass depth:
-   1. ::before  — gradient border (bright top-left → subtle bottom-right)
-   2. ::after   — inner top sheen (simulates overhead light source)
-   3. box-shadow — elevation system (contact + lift + ambient)
-───────────────────────────────────────────────────────── */
+   Palette:
+   · BG        #08091A   deep space navy-black
+   · Accent    #7C79FF   electric indigo (→ #A5A3FF light)
+   · Sky       #50AAFF   cobalt blue highlight
+   · Critical  #FF2D55   iOS red
+   · High      #FF453A   iOS orange-red
+   · Medium    #FFB340   iOS amber
+   · Low       #34D058   iOS green
+═══════════════════════════════════════════════════════════════════ */
+
+/* ─── TOKENS ─────────────────────────────────────────────────────── */
 :root {
-  --bg: #EAECF5;
+  --bg:       #08091A;
+  --bg-2:     rgba(255,255,255,0.03);
+  --bg-3:     rgba(12,10,30,0.96);
+  --bg-hover: rgba(255,255,255,0.055);
 
-  /* Primary accent — iOS indigo */
-  --accent:       #5E5CE6;
-  --accent-deep:  #4F46E5;
-  --accent-light: #818CF8;
-  --accent-sky:   #3B82F6;
-  --accent-dim:   rgba(94,92,230,0.12);
-  --accent-glow:  rgba(94,92,230,0.28);
+  --accent:       #7C79FF;
+  --accent-light: #A5A3FF;
+  --accent-deep:  #5553CC;
+  --accent-sky:   #50AAFF;
+  --accent-dim:   rgba(124,121,255,0.16);
+  --accent-glow:  rgba(124,121,255,0.35);
 
-  /* Semantic — iOS system colors */
-  --success:  #30C55F;
-  --warning:  #FF9F0A;
-  --danger:   #FF3B30;
-  --critical: #C5000A;
+  --success:  #34D058;
+  --warning:  #FFB340;
+  --danger:   #FF453A;
+  --critical: #FF2D55;
 
-  /*
-   * Glass surfaces — macOS Liquid Glass formula
-   *
-   * Key: blue-tinted white (NOT pure white) — this lets the
-   * backdrop-filter saturate() create colored glass tints.
-   *
-   * The gradient border and inner sheen are handled by
-   * ::before and ::after pseudo-elements below.
-   */
-  --glass:       rgba(248,251,255,0.66);
-  --glass-2:     rgba(248,251,255,0.78);
-  --glass-3:     rgba(252,254,255,0.92);
-  --glass-hover: rgba(252,254,255,0.80);
-  --popover:     rgba(252,254,255,0.97);
+  --glass:       rgba(255,255,255,0.042);
+  --glass-2:     rgba(255,255,255,0.07);
+  --glass-3:     rgba(255,255,255,0.11);
+  --glass-hover: rgba(255,255,255,0.072);
+  --popover:     rgba(12,10,30,0.96);
 
-  /* Base glass border — replaced visually by ::before gradient */
-  --glass-border:   rgba(255,255,255,0.80);
-  --glass-border-h: rgba(255,255,255,0.95);
+  --glass-border:   rgba(255,255,255,0.11);
+  --glass-border-h: rgba(255,255,255,0.22);
 
-  /*
-   * Elevation shadow system — Apple design language
-   *
-   * Layer 1: inset top rim — bright specular sheen on the glass top edge
-   * Layer 2: inset top glow — diffuse internal light from above
-   * Layer 3: inset bottom — subtle internal depth at the bottom
-   * Layer 4: outer ring — crisp 0.5px separation from background
-   * Layer 5: contact — immediate proximity to surface
-   * Layer 6: lift — primary elevation cue
-   * Layer 7: ambient — room-scale deep shadow
-   */
   --glass-shadow:
-    inset 0 1.5px 0 rgba(255,255,255,0.95),
-    inset 0 10px 22px rgba(255,255,255,0.16),
-    inset 0 -1px 0 rgba(10,8,40,0.04),
-    0 0 0 0.5px rgba(10,8,40,0.08),
-    0 2px 6px rgba(10,8,40,0.05),
-    0 10px 30px rgba(10,8,40,0.08),
-    0 36px 80px rgba(10,8,40,0.05);
+    inset 0 1px 0 rgba(255,255,255,0.09),
+    inset 0 8px 20px rgba(255,255,255,0.025),
+    0 0 0 0.5px rgba(0,0,0,0.65),
+    0 2px 8px  rgba(0,0,0,0.50),
+    0 12px 36px rgba(0,0,0,0.38),
+    0 40px 80px rgba(0,0,0,0.28);
 
   --glass-shadow-h:
-    inset 0 1.5px 0 rgba(255,255,255,1),
-    inset 0 12px 28px rgba(255,255,255,0.22),
-    inset 0 -1px 0 rgba(10,8,40,0.06),
-    0 0 0 0.5px rgba(10,8,40,0.10),
-    0 4px 12px rgba(10,8,40,0.08),
-    0 18px 48px rgba(10,8,40,0.13),
-    0 44px 100px rgba(10,8,40,0.07);
+    inset 0 1px 0 rgba(255,255,255,0.15),
+    inset 0 10px 24px rgba(255,255,255,0.04),
+    0 0 0 0.5px rgba(0,0,0,0.75),
+    0 4px 14px  rgba(0,0,0,0.60),
+    0 18px 50px rgba(0,0,0,0.48),
+    0 44px 100px rgba(0,0,0,0.32);
 
-  /*
-   * Text hierarchy — WCAG AA compliant on glass (#EAECF5 base)
-   *
-   * primary     rgba(10,8,40,0.92) — ~14:1 ✅✅✅
-   * secondary   rgba(10,8,40,0.72) — ~8:1  ✅✅
-   * tertiary    rgba(10,8,40,0.52) — ~5.5:1 ✅
-   * quaternary  rgba(10,8,40,0.36) — ~3.8:1 ✓ (large text)
-   */
-  --text-primary:    rgba(10,8,40,0.92);
-  --text-secondary:  rgba(10,8,40,0.72);
-  --text-tertiary:   rgba(10,8,40,0.52);
-  --text-quaternary: rgba(10,8,40,0.36);
+  /* Text hierarchy — white on #08091A */
+  --text-primary:    rgba(255,255,255,0.93);
+  --text-secondary:  rgba(255,255,255,0.68);
+  --text-tertiary:   rgba(255,255,255,0.44);
+  --text-quaternary: rgba(255,255,255,0.26);
 
-  /* Backwards-compat aliases */
-  --white:    var(--text-primary);
-  --text:     var(--text-secondary);
-  --text-2:   var(--text-tertiary);
-  --text-3:   var(--text-quaternary);
-  --text-dim: rgba(10,8,40,0.24);
-
-  --blue:      var(--accent);
-  --violet:    var(--accent-deep);
-  --cyan:      var(--accent-sky);
-  --green:     var(--success);
-  --amber:     var(--warning);
-  --rose:      var(--danger);
-  --acid:      var(--accent);
-  --acid-dim:  var(--accent-dim);
-  --acid-glow: var(--accent-glow);
-
-  --bg-2:     rgba(10,8,40,0.03);
-  --bg-3:     var(--popover);
-  --bg-4:     rgba(255,255,255,0.92);
-  --bg-hover: rgba(10,8,40,0.05);
-  --border:   rgba(10,8,40,0.09);
-  --border-2: rgba(10,8,40,0.14);
-  --cell-border:   rgba(10,8,40,0.08);
-  --cell-border-h: rgba(10,8,40,0.13);
+  /* Legacy aliases */
+  --white:        var(--text-primary);
+  --text:         var(--text-secondary);
+  --text-2:       var(--text-tertiary);
+  --text-3:       var(--text-quaternary);
+  --text-dim:     rgba(255,255,255,0.16);
+  --text-5:       rgba(255,255,255,0.16);
+  --blue:         var(--accent);
+  --violet:       var(--accent-deep);
+  --cyan:         var(--accent-sky);
+  --green:        var(--success);
+  --amber:        var(--warning);
+  --rose:         var(--danger);
+  --acid:         var(--accent);
+  --acid-dim:     var(--accent-dim);
+  --acid-glow:    var(--accent-glow);
+  --bg-4:         rgba(255,255,255,0.07);
+  --border:       rgba(255,255,255,0.09);
+  --border-2:     rgba(255,255,255,0.16);
+  --cell-border:  rgba(255,255,255,0.07);
+  --cell-border-h:rgba(255,255,255,0.13);
 
   --sans:    'Manrope', system-ui, sans-serif;
   --mono:    'DM Mono', monospace;
@@ -136,200 +111,97 @@
   --color-foreground: var(--text-primary);
 }
 
-/* ─── BASE ─── */
-html { background: var(--bg); }
+/* ─── BASE  (hardcoded + !important to beat any cache/layer issue) ─ */
+html {
+  background-color: #08091A !important;
+  color-scheme: dark;
+  min-height: 100%;
+}
 body {
-  background: var(--bg);
-  color: var(--text-primary);
-  font-family: var(--sans);
+  background-color: #08091A !important;
+  color: rgba(255,255,255,0.93);
+  font-family: 'Manrope', system-ui, sans-serif;
   font-size: 15px;
   line-height: 1.55;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  min-height: 100%;
 }
 
-* { scrollbar-width: thin; scrollbar-color: rgba(94,92,230,0.30) rgba(10,8,40,0.04); }
+* { scrollbar-width: thin; scrollbar-color: rgba(124,121,255,0.32) rgba(255,255,255,0.03); }
 ::-webkit-scrollbar { width: 4px; height: 4px; }
-::-webkit-scrollbar-thumb { background: rgba(94,92,230,0.30); border-radius: 4px; }
-::-webkit-scrollbar-track { background: rgba(10,8,40,0.04); border-radius: 4px; }
+::-webkit-scrollbar-thumb { background: rgba(124,121,255,0.32); border-radius: 4px; }
+::-webkit-scrollbar-track { background: rgba(255,255,255,0.02); border-radius: 4px; }
 
-/* ─── BACKGROUND SCENE ─────────────────────────────────────────────────────
-   The background is CRITICAL to glass quality. Vivid, saturated orbs give
-   the backdrop-filter saturate() something to amplify. Faint orbs → white
-   boring glass. Vivid orbs → beautifully colored frosted glass.
-─────────────────────────────────────────────────────────────────────────── */
+/* ─── BACKGROUND SCENE ─────────────────────────────────────────────
+   Six vivid orbs at high opacity — they bleed through the dark glass
+   via saturate(280%), creating the characteristic macOS dark-mode
+   colored-glass tint. brightness(0.72) keeps panels dark.
+──────────────────────────────────────────────────────────────────── */
 .bg-scene {
-  position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden;
+  position: fixed; inset: 0; z-index: 0;
+  pointer-events: none; overflow: hidden;
+  background-color: #08091A;
 }
 .bg-scene::before {
   content: '';
   position: absolute; inset: 0;
   background:
-    /* Main indigo orb — top-left, large */
-    radial-gradient(ellipse 78% 68% at -10%  -8%,  rgba(94,92,230,0.38),  transparent 58%),
-    /* Sapphire orb — top-right */
-    radial-gradient(ellipse 60% 65% at 114%   5%,  rgba(59,130,246,0.30),  transparent 56%),
-    /* Rose orb — bottom-center */
-    radial-gradient(ellipse 64% 46% at 50%  120%,  rgba(244,114,182,0.20), transparent 54%),
-    /* Emerald orb — right side */
-    radial-gradient(ellipse 48% 54% at 88%   82%,  rgba(52,199,89,0.14),   transparent 56%),
-    /* Violet accent — left-mid */
-    radial-gradient(ellipse 38% 44% at 22%   68%,  rgba(168,85,247,0.11),  transparent 54%);
-  animation: orbDrift 34s ease-in-out infinite alternate;
+    radial-gradient(ellipse 78% 65% at  -8%  -6%,  rgba(90,86,230,0.62),   transparent 55%),
+    radial-gradient(ellipse 58% 62% at 112%   2%,  rgba(48,120,240,0.52),   transparent 56%),
+    radial-gradient(ellipse 40% 44% at  20%  72%,  rgba(160,80,240,0.34),   transparent 52%),
+    radial-gradient(ellipse 62% 44% at  50% 122%,  rgba(236,108,176,0.36),  transparent 50%),
+    radial-gradient(ellipse 46% 52% at  88%  80%,  rgba(44,190,84,0.24),    transparent 54%),
+    radial-gradient(ellipse 36% 42% at  60%  18%,  rgba(80,170,255,0.18),   transparent 58%);
+  animation: orbDrift 40s ease-in-out infinite alternate;
 }
 .bg-scene::after {
   content: '';
   position: absolute; inset: 0;
-  /* Fine grain noise adds the frosted-glass texture feel */
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.038'/%3E%3C/svg%3E");
-  background-size: 196px 196px;
-  opacity: 0.65;
-  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.06'/%3E%3C/svg%3E");
+  background-size: 180px 180px;
+  opacity: 0.45;
+  mix-blend-mode: overlay;
 }
 @keyframes orbDrift {
-  0%   { transform: scale(1)    translate(0, 0);         }
-  50%  { transform: scale(1.04) translate(0.8%, 0.6%);   }
-  100% { transform: scale(0.97) translate(-0.6%, 1.3%);  }
+  0%   { transform: scale(1)    translate(0, 0);        }
+  33%  { transform: scale(1.03) translate(0.7%, 0.5%);  }
+  66%  { transform: scale(0.98) translate(-0.4%, 1.0%); }
+  100% { transform: scale(1.02) translate(0.5%, -0.8%); }
 }
 
-/* ─── GLASS CELL ────────────────────────────────────────────────────────────
-   Three-layer glass construction:
-   ① ::before — gradient border (light catches top-left edge like real glass)
-   ② box-shadow — inner sheen + outer elevation
-   ③ background + backdrop-filter — the frosted glass itself
-─────────────────────────────────────────────────────────────────────────── */
+/* ─── GLASS CELL ────────────────────────────────────────────────────
+   Layer 1: rgba(255,255,255,0.042) barely-there white tint
+   Layer 2: blur(68px) saturate(280%) brightness(0.72)
+   Layer 3: ::before gradient border (bright top, fade bottom)
+   Layer 4: ::after inner top sheen
+   Layer 5: multi-layer dark box-shadow
+────────────────────────────────────────────────────────────────── */
 .glass-cell {
-  background: var(--glass);
-  /* High saturation picks up ambient color from the vivid background orbs */
-  backdrop-filter: blur(72px) saturate(260%) brightness(1.02);
-  -webkit-backdrop-filter: blur(72px) saturate(260%) brightness(1.02);
-  border-radius: var(--r-xl);
-  border: none; /* visual border handled by ::before gradient */
-  box-shadow: var(--glass-shadow);
-  position: relative; overflow: hidden;
-  transition:
-    background 0.30s ease,
-    box-shadow 0.30s ease,
-    transform 0.24s cubic-bezier(0.34, 1.4, 0.64, 1);
-}
-
-/*
- * ① Gradient border — the defining macOS glass characteristic
- *
- * Uses the CSS mask trick to create a 1px border that's a gradient:
- * - Top-left corner: near-white (where virtual overhead light hits the glass edge)
- * - Sides: medium brightness
- * - Bottom-right: subtle (in shadow relative to the light source)
- *
- * This creates the "glass catching light" look of real Apple glass surfaces.
- */
-.glass-cell::before {
-  content: '';
-  position: absolute; inset: 0;
-  border-radius: inherit;
-  padding: 1px; /* border thickness */
-  background: linear-gradient(
-    135deg,
-    rgba(255,255,255,0.96) 0%,
-    rgba(255,255,255,0.62) 20%,
-    rgba(255,255,255,0.22) 55%,
-    rgba(255,255,255,0.46) 100%
-  );
-  /* Mask trick: show only the padding area (the border zone) */
-  -webkit-mask:
-    linear-gradient(#fff 0 0) content-box,
-    linear-gradient(#fff 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  pointer-events: none;
-  z-index: 2;
-}
-
-/*
- * ② Inner top sheen — simulates overhead ambient light
- *
- * Real glass has a diffuse internal glow near the top surface
- * where light enters. This gradient creates that effect.
- */
-.glass-cell::after {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 55%;
-  border-radius: var(--r-xl) var(--r-xl) 100% 100% / var(--r-xl) var(--r-xl) 40px 40px;
-  background: linear-gradient(
-    180deg,
-    rgba(255,255,255,0.26) 0%,
-    rgba(255,255,255,0.08) 40%,
-    transparent 100%
-  );
-  pointer-events: none;
-  z-index: 1;
-}
-
-.glass-cell:hover {
-  background: var(--glass-hover);
-  box-shadow: var(--glass-shadow-h);
-  transform: translateY(-2px);
-}
-.glass-cell:hover::before {
-  background: linear-gradient(
-    135deg,
-    rgba(255,255,255,1)    0%,
-    rgba(255,255,255,0.76) 20%,
-    rgba(255,255,255,0.30) 55%,
-    rgba(255,255,255,0.58) 100%
-  );
-}
-
-/* Tinted glass variants */
-.glass-danger {
-  background: rgba(255,244,244,0.72) !important;
-}
-.glass-danger:hover { background: rgba(255,238,238,0.82) !important; }
-
-.glass-safe {
-  background: rgba(240,255,248,0.72) !important;
-}
-.glass-safe:hover { background: rgba(232,255,244,0.82) !important; }
-
-.glass-warn {
-  background: rgba(255,252,238,0.72) !important;
-}
-
-.glass-blue {
-  background: rgba(244,245,255,0.72) !important;
-}
-
-.glass-score {
-  background: linear-gradient(148deg, rgba(244,245,255,0.74) 0%, rgba(238,246,255,0.72) 100%) !important;
-}
-
-/* bento-cell — identical treatment */
-.bento-cell {
-  background: var(--glass);
-  backdrop-filter: blur(72px) saturate(260%) brightness(1.02);
-  -webkit-backdrop-filter: blur(72px) saturate(260%) brightness(1.02);
+  background: rgba(255,255,255,0.042);
+  backdrop-filter: blur(68px) saturate(280%) brightness(0.72);
+  -webkit-backdrop-filter: blur(68px) saturate(280%) brightness(0.72);
   border-radius: var(--r-xl);
   border: none;
   box-shadow: var(--glass-shadow);
-  position: relative; overflow: hidden;
+  position: relative;
+  overflow: hidden;
   transition:
-    background 0.30s ease,
-    box-shadow 0.30s ease,
-    transform 0.24s cubic-bezier(0.34, 1.4, 0.64, 1);
+    background 0.28s ease,
+    box-shadow 0.28s ease,
+    transform 0.22s cubic-bezier(0.34, 1.4, 0.64, 1);
 }
-.bento-cell::before {
+.glass-cell::before {
   content: '';
   position: absolute; inset: 0;
   border-radius: inherit;
   padding: 1px;
   background: linear-gradient(
-    135deg,
-    rgba(255,255,255,0.96) 0%,
-    rgba(255,255,255,0.62) 20%,
-    rgba(255,255,255,0.22) 55%,
-    rgba(255,255,255,0.46) 100%
+    140deg,
+    rgba(255,255,255,0.22) 0%,
+    rgba(255,255,255,0.08) 30%,
+    rgba(255,255,255,0.03) 60%,
+    rgba(255,255,255,0.10) 100%
   );
   -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
@@ -337,23 +209,92 @@ body {
   pointer-events: none;
   z-index: 2;
 }
-.bento-cell::after {
+.glass-cell::after {
   content: '';
   position: absolute;
-  top: 0; left: 0; right: 0; height: 55%;
-  border-radius: var(--r-xl) var(--r-xl) 100% 100% / var(--r-xl) var(--r-xl) 40px 40px;
-  background: linear-gradient(180deg, rgba(255,255,255,0.26) 0%, rgba(255,255,255,0.08) 40%, transparent 100%);
+  top: 0; left: 0; right: 0; height: 48%;
+  border-radius: var(--r-xl) var(--r-xl) 100% 100% / var(--r-xl) var(--r-xl) 38px 38px;
+  background: linear-gradient(
+    180deg,
+    rgba(255,255,255,0.065) 0%,
+    rgba(255,255,255,0.018) 45%,
+    transparent 100%
+  );
   pointer-events: none;
   z-index: 1;
 }
-.bento-cell:hover {
-  background: var(--glass-hover);
+.glass-cell:hover {
+  background: rgba(255,255,255,0.072);
   box-shadow: var(--glass-shadow-h);
   transform: translateY(-2px);
 }
-.bento-danger {
-  background: rgba(255,244,244,0.72) !important;
+.glass-cell:hover::before {
+  background: linear-gradient(
+    140deg,
+    rgba(255,255,255,0.32) 0%,
+    rgba(255,255,255,0.12) 30%,
+    rgba(255,255,255,0.05) 60%,
+    rgba(255,255,255,0.16) 100%
+  );
 }
+
+/* Tinted variants */
+.glass-danger {
+  background: rgba(255,69,58,0.13) !important;
+  box-shadow: var(--glass-shadow), 0 0 0 0.5px rgba(255,69,58,0.22) !important;
+}
+.glass-danger:hover { background: rgba(255,69,58,0.18) !important; }
+
+.glass-safe {
+  background: rgba(52,208,88,0.11) !important;
+  box-shadow: var(--glass-shadow), 0 0 0 0.5px rgba(52,208,88,0.20) !important;
+}
+.glass-safe:hover { background: rgba(52,208,88,0.17) !important; }
+
+.glass-warn {
+  background: rgba(255,179,64,0.11) !important;
+  box-shadow: var(--glass-shadow), 0 0 0 0.5px rgba(255,179,64,0.20) !important;
+}
+
+.glass-blue {
+  background: rgba(124,121,255,0.13) !important;
+  box-shadow: var(--glass-shadow), 0 0 0 0.5px rgba(124,121,255,0.22) !important;
+}
+
+.glass-score {
+  background: linear-gradient(148deg, rgba(124,121,255,0.11) 0%, rgba(80,170,255,0.09) 100%) !important;
+  box-shadow: var(--glass-shadow), 0 0 0 0.5px rgba(124,121,255,0.20) !important;
+}
+
+/* bento-cell — identical to glass-cell */
+.bento-cell {
+  background: rgba(255,255,255,0.042);
+  backdrop-filter: blur(68px) saturate(280%) brightness(0.72);
+  -webkit-backdrop-filter: blur(68px) saturate(280%) brightness(0.72);
+  border-radius: var(--r-xl);
+  border: none;
+  box-shadow: var(--glass-shadow);
+  position: relative; overflow: hidden;
+  transition: background 0.28s ease, box-shadow 0.28s ease,
+    transform 0.22s cubic-bezier(0.34, 1.4, 0.64, 1);
+}
+.bento-cell::before {
+  content: '';
+  position: absolute; inset: 0; border-radius: inherit; padding: 1px;
+  background: linear-gradient(140deg, rgba(255,255,255,0.22) 0%, rgba(255,255,255,0.08) 30%, rgba(255,255,255,0.03) 60%, rgba(255,255,255,0.10) 100%);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor; mask-composite: exclude;
+  pointer-events: none; z-index: 2;
+}
+.bento-cell::after {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 48%;
+  border-radius: var(--r-xl) var(--r-xl) 100% 100% / var(--r-xl) var(--r-xl) 38px 38px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.065) 0%, rgba(255,255,255,0.018) 45%, transparent 100%);
+  pointer-events: none; z-index: 1;
+}
+.bento-cell:hover { background: rgba(255,255,255,0.072); box-shadow: var(--glass-shadow-h); transform: translateY(-2px); }
+.bento-danger { background: rgba(255,69,58,0.13) !important; }
 
 /* ─── GRIDS ─── */
 .bento-grid, .glass-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: var(--gap); }
@@ -365,148 +306,140 @@ body {
 
 /* ─── TYPOGRAPHY ─── */
 .display-heading {
-  font-family: var(--sans); font-weight: 800;
+  font-family: 'Manrope', system-ui, sans-serif;
+  font-weight: 800;
   font-size: clamp(36px, 5vw, 62px);
-  line-height: 1.01; letter-spacing: -0.03em;
-  color: var(--text-primary);
+  line-height: 1.01;
+  letter-spacing: -0.03em;
+  color: rgba(255,255,255,0.93);
 }
 .cell-label {
-  display: block; font-family: var(--sans);
+  display: block; font-family: 'Manrope', system-ui, sans-serif;
   font-size: 11px; font-weight: 600;
   letter-spacing: 0.05em; text-transform: uppercase;
-  color: var(--text-tertiary);
+  color: rgba(255,255,255,0.44);
 }
 .cell-number {
-  display: block; font-family: var(--sans);
+  display: block; font-family: 'Manrope', system-ui, sans-serif;
   font-weight: 800; line-height: 0.9;
-  letter-spacing: -0.025em; color: var(--text-primary);
+  letter-spacing: -0.025em; color: rgba(255,255,255,0.93);
 }
 .cell-number-xl { font-size: clamp(50px, 6vw, 78px); }
 .cell-number-lg { font-size: clamp(36px, 5vw, 58px); }
 .cell-number-md { font-size: clamp(24px, 3.5vw, 40px); }
 .cell-number-sm { font-size: clamp(16px, 2.5vw, 24px); }
-.mono-label { font-family: var(--mono); font-size: 10px; letter-spacing: 0.06em; color: var(--text-quaternary); }
+.mono-label { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.06em; color: rgba(255,255,255,0.26); }
 
 /* ─── BUTTONS ─── */
 .btn {
   display: inline-flex; align-items: center; justify-content: center;
   gap: 8px; cursor: pointer; border: none;
-  font-family: var(--sans); font-weight: 600; letter-spacing: -0.01em;
+  font-family: 'Manrope', system-ui, sans-serif;
+  font-weight: 600; letter-spacing: -0.01em;
   transition: all 0.22s ease;
-  position: relative; /* ensure above glass ::after overlays */
-  z-index: 3;
+  position: relative; z-index: 3;
 }
 .btn:focus-visible {
-  outline: 2px solid rgba(94,92,230,0.55);
-  outline-offset: 2px;
-  border-radius: inherit;
+  outline: 2px solid rgba(124,121,255,0.55);
+  outline-offset: 2px; border-radius: inherit;
 }
 
 .btn-primary {
   padding: 14px 32px; min-height: 52px; font-size: 16px;
   color: #fff; border-radius: 14px;
-  background: linear-gradient(135deg, #5E5CE6 0%, #4F46E5 100%);
+  background: linear-gradient(135deg, #8A87FF 0%, #6B68F0 100%);
   box-shadow:
-    0 4px 16px rgba(94,92,230,0.36),
-    0 1px 4px rgba(94,92,230,0.22),
-    inset 0 1.5px 0 rgba(255,255,255,0.30);
+    0 4px 20px rgba(124,121,255,0.42),
+    0 1px 4px  rgba(124,121,255,0.26),
+    inset 0 1.5px 0 rgba(255,255,255,0.28);
 }
 .btn-primary:hover {
-  background: linear-gradient(135deg, #6E6CEA 0%, #5E5CE6 100%);
+  background: linear-gradient(135deg, #9A97FF 0%, #7C79FF 100%);
   transform: translateY(-1px);
   box-shadow:
-    0 8px 28px rgba(94,92,230,0.42),
-    0 2px 6px rgba(94,92,230,0.26),
+    0 8px 32px rgba(124,121,255,0.52),
+    0 2px 8px  rgba(124,121,255,0.30),
     inset 0 1.5px 0 rgba(255,255,255,0.34);
 }
-.btn-primary:active {
-  transform: scale(0.98) translateY(0);
-  box-shadow: 0 2px 8px rgba(94,92,230,0.28), inset 0 1px 0 rgba(255,255,255,0.18);
-}
+.btn-primary:active  { transform: scale(0.98); }
 .btn-primary:disabled {
-  background: rgba(10,8,40,0.09);
-  color: rgba(10,8,40,0.30);
-  cursor: not-allowed;
-  transform: none;
-  box-shadow: none;
+  background: rgba(255,255,255,0.09);
+  color: rgba(255,255,255,0.26);
+  cursor: not-allowed; transform: none; box-shadow: none;
 }
 
 .btn-ghost {
   padding: 9px 18px; min-height: 38px; font-size: 13px; border-radius: 12px;
-  background: rgba(248,251,255,0.72);
-  color: var(--text-secondary);
-  /* Gradient border via box-shadow for ghost buttons */
+  background: rgba(255,255,255,0.065);
+  color: rgba(255,255,255,0.68);
   box-shadow:
-    inset 0 1.5px 0 rgba(255,255,255,0.90),
-    0 0 0 0.5px rgba(10,8,40,0.10),
-    0 2px 6px rgba(10,8,40,0.05);
-  backdrop-filter: blur(24px) saturate(200%); -webkit-backdrop-filter: blur(24px) saturate(200%);
+    inset 0 1px 0 rgba(255,255,255,0.12),
+    0 0 0 0.5px rgba(0,0,0,0.55),
+    0 2px 6px rgba(0,0,0,0.30);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
 }
 .btn-ghost:hover {
-  background: rgba(252,254,255,0.88);
-  color: var(--text-primary);
+  background: rgba(255,255,255,0.10);
+  color: rgba(255,255,255,0.93);
   transform: translateY(-1px);
   box-shadow:
-    inset 0 1.5px 0 rgba(255,255,255,1),
-    0 0 0 0.5px rgba(10,8,40,0.12),
-    0 4px 12px rgba(10,8,40,0.09);
+    inset 0 1px 0 rgba(255,255,255,0.18),
+    0 0 0 0.5px rgba(0,0,0,0.65),
+    0 4px 14px rgba(0,0,0,0.38);
 }
 .btn-ghost:active { transform: scale(0.98); }
 
 /* ─── FORMS ─── */
 textarea, input[type="text"], input[type="url"] {
-  background: rgba(252,254,255,0.72);
+  background: rgba(255,255,255,0.055) !important;
   border: none;
   border-radius: 12px;
-  color: var(--text-primary);
-  font-family: var(--mono); font-size: 13px; line-height: 1.7;
-  backdrop-filter: blur(24px) saturate(200%); -webkit-backdrop-filter: blur(24px) saturate(200%);
+  color: rgba(255,255,255,0.93);
+  font-family: 'DM Mono', monospace; font-size: 13px; line-height: 1.7;
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
   box-shadow:
-    inset 0 1.5px 0 rgba(255,255,255,0.88),
-    inset 0 2px 6px rgba(10,8,40,0.04),
-    0 0 0 0.5px rgba(10,8,40,0.09);
+    inset 0 1px 0 rgba(255,255,255,0.09),
+    inset 0 2px 8px rgba(0,0,0,0.28),
+    0 0 0 0.5px rgba(0,0,0,0.55);
   transition: box-shadow 0.22s, background 0.22s;
 }
 textarea:focus, input[type="text"]:focus, input[type="url"]:focus {
   outline: none;
-  background: rgba(255,255,255,0.88);
+  background: rgba(255,255,255,0.08) !important;
   box-shadow:
-    inset 0 1.5px 0 rgba(255,255,255,0.95),
-    inset 0 2px 6px rgba(10,8,40,0.03),
-    0 0 0 0.5px rgba(94,92,230,0.50),
-    0 0 0 3.5px rgba(94,92,230,0.13);
+    inset 0 1px 0 rgba(255,255,255,0.12),
+    inset 0 2px 8px rgba(0,0,0,0.22),
+    0 0 0 0.5px rgba(124,121,255,0.52),
+    0 0 0 3.5px rgba(124,121,255,0.14);
 }
-textarea::placeholder, input::placeholder {
-  color: rgba(10,8,40,0.35);
-}
+textarea::placeholder, input::placeholder { color: rgba(255,255,255,0.26) !important; }
 
 /* ─── PILLS ─── */
 .pill {
   display: inline-flex; align-items: center; gap: 5px;
   padding: 4px 12px; border-radius: 999px;
-  font-family: var(--sans); font-size: 11px; font-weight: 600;
-  letter-spacing: 0.01em;
+  font-family: 'Manrope', system-ui, sans-serif;
+  font-size: 11px; font-weight: 600; letter-spacing: 0.01em;
 }
 
 /* ─── CARD ─── */
 .card { background: transparent; border: none; }
 .card-glow {
-  background: var(--glass);
-  border-radius: var(--r-xl);
-  border: none;
+  background: rgba(255,255,255,0.042);
+  border-radius: var(--r-xl); border: none;
   box-shadow: var(--glass-shadow);
-  backdrop-filter: blur(72px) saturate(260%) brightness(1.02);
-  -webkit-backdrop-filter: blur(72px) saturate(260%) brightness(1.02);
+  backdrop-filter: blur(68px) saturate(280%) brightness(0.72);
+  -webkit-backdrop-filter: blur(68px) saturate(280%) brightness(0.72);
   position: relative; overflow: hidden;
 }
 .card-glow::before {
   content: '';
-  position: absolute; inset: 0;
-  border-radius: inherit; padding: 1px;
-  background: linear-gradient(135deg, rgba(255,255,255,0.96) 0%, rgba(255,255,255,0.62) 20%, rgba(255,255,255,0.22) 55%, rgba(255,255,255,0.46) 100%);
+  position: absolute; inset: 0; border-radius: inherit; padding: 1px;
+  background: linear-gradient(140deg, rgba(255,255,255,0.22) 0%, rgba(255,255,255,0.08) 30%, rgba(255,255,255,0.03) 60%, rgba(255,255,255,0.10) 100%);
   -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
+  -webkit-mask-composite: xor; mask-composite: exclude;
   pointer-events: none; z-index: 2;
 }
 
@@ -517,15 +450,17 @@ textarea::placeholder, input::placeholder {
   100% { background-position:  200% 0; }
 }
 .skeleton {
-  background: linear-gradient(
-    90deg,
-    rgba(10,8,40,0.04),
-    rgba(10,8,40,0.08),
-    rgba(10,8,40,0.04)
-  );
+  background: linear-gradient(90deg,
+    rgba(255,255,255,0.03),
+    rgba(255,255,255,0.07),
+    rgba(255,255,255,0.03));
   background-size: 200% 100%;
-  animation: shimmer 1.8s ease-in-out infinite;
+  animation: shimmer 1.9s ease-in-out infinite;
   border-radius: 8px;
 }
-@keyframes livePulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.28; } }
-.live-dot { animation: livePulse 2.2s ease-in-out infinite; }
+@keyframes livePulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.24; } }
+.live-dot { animation: livePulse 2.4s ease-in-out infinite; }
+@keyframes pulseBlue {
+  0%, 100% { opacity: 1; box-shadow: 0 0 4px currentColor; }
+  50%       { opacity: 0.50; box-shadow: 0 0 10px currentColor; }
+}

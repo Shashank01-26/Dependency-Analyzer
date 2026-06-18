@@ -34,7 +34,7 @@ export default function DependencyTable({ dependencies }: { dependencies: Analyz
 
   return (
     <div>
-      <div className="flex items-center justify-between px-5 py-3 border-b" style={{ borderColor: 'rgba(0,0,0,0.07)' }}>
+      <div className="flex items-center justify-between px-5 py-3 border-b" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
         <div className="flex items-center gap-3">
           <span style={{ fontFamily: 'var(--sans)', fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)' }}>
             Dependencies
@@ -57,22 +57,22 @@ export default function DependencyTable({ dependencies }: { dependencies: Analyz
       <div className="overflow-x-auto">
         <table className="w-full">
           <thead>
-            <tr style={{ background: 'rgba(0,0,0,0.03)' }}>
+            <tr style={{ background: 'rgba(255,255,255,0.04)' }}>
               {([{ f: 'name' as SortField, l: 'Package' }, { f: 'score' as SortField, l: 'Risk' }, { f: 'downloads' as SortField, l: 'Downloads / wk' }, { f: 'maintainers' as SortField, l: 'Maintainers' }]).map(col => (
                 <th key={col.f} onClick={() => toggle(col.f)}
                   className="px-5 py-3 text-left cursor-pointer select-none"
-                  style={{ fontFamily: 'var(--sans)', fontSize: 11, fontWeight: 600, color: sf === col.f ? 'var(--accent)' : 'var(--text-tertiary)', borderBottom: '1px solid rgba(0,0,0,0.07)', transition: 'color 0.15s', letterSpacing: '0.01em' }}>
+                  style={{ fontFamily: 'var(--sans)', fontSize: 11, fontWeight: 600, color: sf === col.f ? 'var(--accent)' : 'var(--text-tertiary)', borderBottom: '1px solid rgba(255,255,255,0.08)', transition: 'color 0.15s', letterSpacing: '0.01em' }}>
                   {col.l} <span style={{ opacity: 0.5 }}>{sf === col.f ? (sd === 'desc' ? '↓' : '↑') : ''}</span>
                 </th>
               ))}
-              <th className="px-5 py-3 text-left" style={{ fontFamily: 'var(--sans)', fontSize: 11, fontWeight: 600, color: 'var(--text-tertiary)', borderBottom: '1px solid rgba(0,0,0,0.07)' }}>Flags</th>
+              <th className="px-5 py-3 text-left" style={{ fontFamily: 'var(--sans)', fontSize: 11, fontWeight: 600, color: 'var(--text-tertiary)', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>Flags</th>
             </tr>
           </thead>
           <tbody>
             {sorted.map((dep, i) => (
               <motion.tr key={dep.name} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.02 }}
-                className="cursor-pointer transition-colors hover:bg-[rgba(0,0,0,0.04)]"
-                style={{ borderBottom: '1px solid rgba(0,0,0,0.06)' }}
+                className="cursor-pointer transition-colors hover:bg-[rgba(255,255,255,0.05)]"
+                style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}
                 onClick={() => setExpanded(expanded === dep.name ? null : dep.name)}>
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-2">
@@ -110,7 +110,7 @@ export default function DependencyTable({ dependencies }: { dependencies: Analyz
           if (!dep) return null;
           return (
             <motion.div key={expanded} initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}
-              className="overflow-hidden border-t" style={{ borderColor: 'rgba(0,0,0,0.07)', background: 'rgba(0,0,0,0.02)' }}>
+              className="overflow-hidden border-t" style={{ borderColor: 'rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.03)' }}>
               <div className="p-6 grid grid-cols-2 md:grid-cols-4 gap-6">
                 <div>
                   <h4 className="text-xs font-bold uppercase tracking-wide mb-3" style={{ color: 'var(--text-3)' }}>Risk Breakdown</h4>

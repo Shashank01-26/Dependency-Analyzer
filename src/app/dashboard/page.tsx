@@ -6,11 +6,11 @@ import Link from 'next/link';
 import { ScanSummary } from '@/types';
 import { listScans, deleteScan } from '@/lib/scan-store';
 
-const RISK_CFG: Record<string, { color: string; bg: string; border: string; outer: string }> = {
-  critical: { color: '#C5000A', bg: 'rgba(197,0,10,0.08)',  border: 'rgba(255,255,255,0.72)', outer: 'rgba(197,0,10,0.16)'  },
-  high:     { color: '#D73027', bg: 'rgba(255,59,48,0.08)', border: 'rgba(255,255,255,0.72)', outer: 'rgba(255,59,48,0.16)'  },
-  medium:   { color: '#B36200', bg: 'rgba(255,149,0,0.08)', border: 'rgba(255,255,255,0.72)', outer: 'rgba(255,149,0,0.16)'  },
-  low:      { color: '#28904A', bg: 'rgba(52,199,89,0.08)', border: 'rgba(255,255,255,0.72)', outer: 'rgba(52,199,89,0.16)'   },
+const RISK_CFG: Record<string, { color: string; bg: string; outer: string }> = {
+  critical: { color: '#FF2D55', bg: 'rgba(255,45,85,0.14)',  outer: 'rgba(255,45,85,0.28)'  },
+  high:     { color: '#FF453A', bg: 'rgba(255,69,58,0.14)',  outer: 'rgba(255,69,58,0.28)'  },
+  medium:   { color: '#FFB340', bg: 'rgba(255,179,64,0.14)', outer: 'rgba(255,179,64,0.26)' },
+  low:      { color: '#34D058', bg: 'rgba(52,208,88,0.12)',  outer: 'rgba(52,208,88,0.24)'  },
 };
 
 const ECOSYSTEM_ICONS: Record<string, string> = {
@@ -21,9 +21,9 @@ const ECOSYSTEM_ICONS: Record<string, string> = {
 const ease = [0.25, 0.1, 0.25, 1] as const;
 
 function ScoreBar({ score }: { score: number }) {
-  const color = score >= 70 ? '#D73027' : score >= 45 ? '#B36200' : score >= 25 ? '#CC9200' : '#28904A';
+  const color = score >= 70 ? '#FF453A' : score >= 45 ? '#FFB340' : score >= 25 ? '#FFB340' : '#34D058';
   return (
-    <div className="w-full rounded-full overflow-hidden" style={{ height: 4, background: 'rgba(10,8,40,0.09)', marginTop: 8 }}>
+    <div className="w-full rounded-full overflow-hidden" style={{ height: 4, background: 'rgba(255,255,255,0.10)', marginTop: 8 }}>
       <motion.div
         className="h-full rounded-full"
         style={{ background: color, boxShadow: `0 0 8px ${color}60` }}
@@ -99,7 +99,12 @@ export default function DashboardPage() {
                 className="glass-cell"
                 style={{
                   background: cfg.bg,
-                  boxShadow: `inset 0 1.5px 0 rgba(255,255,255,0.90), 0 0 0 0.5px ${cfg.outer}, 0 2px 8px rgba(10,8,40,0.06), 0 8px 24px rgba(10,8,40,0.08)`,
+                  boxShadow: [
+                    'inset 0 1px 0 rgba(255,255,255,0.10)',
+                    `0 0 0 0.5px ${cfg.outer}`,
+                    '0 2px 8px rgba(0,0,0,0.35)',
+                    '0 8px 24px rgba(0,0,0,0.25)',
+                  ].join(', '),
                   padding: '20px 22px',
                 }}
               >
@@ -128,12 +133,12 @@ export default function DashboardPage() {
                   style={{
                     padding: '5px 14px', borderRadius: 999,
                     fontFamily: 'var(--sans)', fontSize: 12, fontWeight: 600,
-                    color: active ? '#5E5CE6' : 'var(--text-tertiary)',
-                    background: active ? 'rgba(94,92,230,0.10)' : 'rgba(255,255,255,0.68)',
-                    border: active ? '1px solid rgba(94,92,230,0.24)' : '1px solid rgba(255,255,255,0.72)',
+                    color: active ? '#A8A6FF' : 'var(--text-tertiary)',
+                    background: active ? 'rgba(120,117,255,0.18)' : 'rgba(255,255,255,0.07)',
+                    border: active ? '1px solid rgba(120,117,255,0.30)' : '1px solid rgba(255,255,255,0.10)',
                     boxShadow: active
-                      ? 'inset 0 1px 0 rgba(255,255,255,0.90), 0 0 0 0.5px rgba(94,92,230,0.18)'
-                      : 'inset 0 1px 0 rgba(255,255,255,0.90), 0 0 0 0.5px rgba(10,8,40,0.07)',
+                      ? 'inset 0 1px 0 rgba(255,255,255,0.14), 0 0 0 0.5px rgba(120,117,255,0.25)'
+                      : 'inset 0 1px 0 rgba(255,255,255,0.08), 0 0 0 0.5px rgba(0,0,0,0.30)',
                     cursor: 'pointer',
                     transition: 'all 0.18s ease',
                   }}
@@ -190,7 +195,7 @@ export default function DashboardPage() {
                             letterSpacing: '-0.02em',
                             overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                           }}
-                          onMouseEnter={e => ((e.currentTarget as HTMLAnchorElement).style.color = 'var(--accent)')}
+                          onMouseEnter={e => ((e.currentTarget as HTMLAnchorElement).style.color = 'var(--accent-light)')}
                           onMouseLeave={e => ((e.currentTarget as HTMLAnchorElement).style.color = 'var(--text-primary)')}
                         >
                           {scan.projectName}
@@ -207,8 +212,8 @@ export default function DashboardPage() {
                       padding: '4px 11px', borderRadius: 999, flexShrink: 0,
                       fontFamily: 'var(--sans)', fontSize: 11, fontWeight: 700, textTransform: 'capitalize',
                       color: cfg.color, background: cfg.bg,
-                      border: '1px solid rgba(255,255,255,0.72)',
-                      boxShadow: `inset 0 1px 0 rgba(255,255,255,0.90), 0 0 0 0.5px ${cfg.outer}`,
+                      border: `1px solid ${cfg.outer}`,
+                      boxShadow: `inset 0 1px 0 rgba(255,255,255,0.10), 0 0 0 0.5px ${cfg.outer}`,
                     }}>
                       {scan.overallRiskLevel}
                     </span>
@@ -228,7 +233,7 @@ export default function DashboardPage() {
                   </div>
 
                   {scan.criticalCount > 0 && (
-                    <p style={{ fontFamily: 'var(--sans)', fontSize: 12, fontWeight: 600, color: '#C5000A', marginTop: 10 }}>
+                    <p style={{ fontFamily: 'var(--sans)', fontSize: 12, fontWeight: 600, color: '#FF2D55', marginTop: 10 }}>
                       {scan.criticalCount} critical dep{scan.criticalCount > 1 ? 's' : ''}
                     </p>
                   )}
@@ -237,7 +242,7 @@ export default function DashboardPage() {
                   <div style={{
                     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                     marginTop: 14, paddingTop: 12,
-                    borderTop: '1px solid rgba(10,8,40,0.07)',
+                    borderTop: '1px solid rgba(255,255,255,0.08)',
                     opacity: 0, transition: 'opacity 0.2s ease',
                   }}
                     className="group-hover:opacity-100"
@@ -252,7 +257,7 @@ export default function DashboardPage() {
                         background: 'none', border: 'none', cursor: 'pointer',
                         transition: 'color 0.15s',
                       }}
-                      onMouseEnter={e => ((e.currentTarget as HTMLButtonElement).style.color = '#D73027')}
+                      onMouseEnter={e => ((e.currentTarget as HTMLButtonElement).style.color = '#FF453A')}
                       onMouseLeave={e => ((e.currentTarget as HTMLButtonElement).style.color = 'var(--text-quaternary)')}
                     >
                       Delete
