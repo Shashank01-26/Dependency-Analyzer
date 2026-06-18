@@ -1,4 +1,4 @@
-export type Ecosystem = 'npm' | 'flutter' | 'android';
+export type Ecosystem = 'npm' | 'flutter' | 'android' | 'python' | 'rust' | 'go' | 'ruby' | 'dotnet';
 
 export interface PackageJson {
   name?: string;
@@ -29,6 +29,9 @@ export interface NpmPackageMetadata {
   versions: number;
   dependencies: Record<string, string>;
   publishFrequencyDays: number;
+  // Supply chain fields
+  hasInstallScript?: boolean;
+  scripts?: Record<string, string>;
 }
 
 export interface GithubMetadata {
@@ -48,24 +51,50 @@ export interface VulnerabilityInfo {
   severity: 'low' | 'moderate' | 'high' | 'critical';
   url?: string;
   range?: string;
+  // Enhanced CVE fields
+  cvss?: number;
+  cvssVector?: string;
+  fixedIn?: string;
+  nvdUrl?: string;
+  epss?: number;
+  // Transitive path: package names from root to vulnerable dep
+  path?: string[];
 }
 
 export type RiskLevel = 'low' | 'medium' | 'high' | 'critical';
 
 export interface RiskFlag {
-  type: 'unmaintained' | 'vulnerable' | 'deprecated' | 'low-popularity' | 'deep-chain' | 'single-maintainer' | 'stale';
+  type:
+    | 'unmaintained'
+    | 'vulnerable'
+    | 'deprecated'
+    | 'low-popularity'
+    | 'deep-chain'
+    | 'single-maintainer'
+    | 'stale'
+    | 'typosquatting'
+    | 'install-script'
+    | 'ownership-transfer'
+    | 'unpinned-version'
+    | 'license-risk';
   label: string;
   severity: RiskLevel;
   detail: string;
 }
 
 export interface DependencyRiskScore {
-  maintenance: number;      // 0-100 (higher = riskier)
-  security: number;         // 0-100
-  popularity: number;       // 0-100
-  community: number;        // 0-100
-  depthRisk: number;        // 0-100
-  overall: number;          // 0-100 weighted composite
+  maintenance: number;
+  security: number;
+  popularity: number;
+  community: number;
+  depthRisk: number;
+  overall: number;
+}
+
+export interface LicenseInfo {
+  spdx: string;
+  category: 'permissive' | 'weak-copyleft' | 'strong-copyleft' | 'unknown';
+  compatible: boolean;
 }
 
 export interface AnalyzedDependency {
@@ -81,6 +110,23 @@ export interface AnalyzedDependency {
   depth: number;
   directDeps: string[];
   transitiveCount: number;
+  license?: LicenseInfo;
+}
+
+export interface PolicyConfig {
+  maxOverallScore?: number;
+  blockLicenses?: string[];
+  maxDepth?: number;
+  requirePinnedVersions?: boolean;
+  blockSingleMaintainer?: boolean;
+  blockUnmaintainedDays?: number;
+}
+
+export interface PolicyViolation {
+  rule: string;
+  packageName: string;
+  detail: string;
+  severity: RiskLevel;
 }
 
 export interface ScanResult {
@@ -99,6 +145,7 @@ export interface ScanResult {
   lowCount: number;
   dependencies: AnalyzedDependency[];
   tree: DependencyTreeNode[];
+  policyViolations?: PolicyViolation[];
 }
 
 export interface DependencyTreeNode {
@@ -116,4 +163,15 @@ export interface AIInsight {
   description: string;
   severity?: RiskLevel;
   alternative?: string;
+}
+
+export interface ScanSummary {
+  id: string;
+  timestamp: string;
+  projectName: string;
+  overallScore: number;
+  overallRiskLevel: RiskLevel;
+  ecosystem: Ecosystem;
+  totalDependencies: number;
+  criticalCount: number;
 }
