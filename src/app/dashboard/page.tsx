@@ -6,11 +6,11 @@ import Link from 'next/link';
 import { ScanSummary } from '@/types';
 import { listScans, deleteScan } from '@/lib/scan-store';
 
-const RISK_COLORS: Record<string, string> = {
-  critical: 'text-red-400 border-red-900 bg-red-950/30',
-  high: 'text-orange-400 border-orange-900 bg-orange-950/30',
-  medium: 'text-yellow-400 border-yellow-900 bg-yellow-950/30',
-  low: 'text-green-400 border-green-900 bg-green-950/30',
+const RISK_CFG: Record<string, { color: string; bg: string; border: string; outer: string }> = {
+  critical: { color: '#C5000A', bg: 'rgba(197,0,10,0.08)',  border: 'rgba(255,255,255,0.72)', outer: 'rgba(197,0,10,0.16)'  },
+  high:     { color: '#D73027', bg: 'rgba(255,59,48,0.08)', border: 'rgba(255,255,255,0.72)', outer: 'rgba(255,59,48,0.16)'  },
+  medium:   { color: '#B36200', bg: 'rgba(255,149,0,0.08)', border: 'rgba(255,255,255,0.72)', outer: 'rgba(255,149,0,0.16)'  },
+  low:      { color: '#28904A', bg: 'rgba(52,199,89,0.08)', border: 'rgba(255,255,255,0.72)', outer: 'rgba(52,199,89,0.16)'   },
 };
 
 const ECOSYSTEM_ICONS: Record<string, string> = {
@@ -18,11 +18,19 @@ const ECOSYSTEM_ICONS: Record<string, string> = {
   rust: '🦀', go: '🐹', ruby: '💎', dotnet: '⬡',
 };
 
+const ease = [0.25, 0.1, 0.25, 1] as const;
+
 function ScoreBar({ score }: { score: number }) {
-  const color = score >= 70 ? '#ef4444' : score >= 45 ? '#f97316' : score >= 25 ? '#eab308' : '#22c55e';
+  const color = score >= 70 ? '#D73027' : score >= 45 ? '#B36200' : score >= 25 ? '#CC9200' : '#28904A';
   return (
-    <div className="w-full bg-zinc-800 rounded-full h-1.5 mt-2">
-      <div className="h-1.5 rounded-full transition-all" style={{ width: `${score}%`, background: color }} />
+    <div className="w-full rounded-full overflow-hidden" style={{ height: 4, background: 'rgba(10,8,40,0.09)', marginTop: 8 }}>
+      <motion.div
+        className="h-full rounded-full"
+        style={{ background: color, boxShadow: `0 0 8px ${color}60` }}
+        initial={{ width: 0 }}
+        animate={{ width: `${score}%` }}
+        transition={{ duration: 0.8, ease: 'easeOut', delay: 0.2 }}
+      />
     </div>
   );
 }
@@ -43,7 +51,6 @@ export default function DashboardPage() {
   const ecosystems = ['all', ...Array.from(new Set(scans.map(s => s.ecosystem)))];
   const filtered = filter === 'all' ? scans : scans.filter(s => s.ecosystem === filter);
 
-  // Group by project name, show latest per project
   const byProject = new Map<string, ScanSummary>();
   for (const scan of filtered) {
     if (!byProject.has(scan.projectName)) byProject.set(scan.projectName, scan);
@@ -51,110 +58,202 @@ export default function DashboardPage() {
   const projects = Array.from(byProject.values());
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100 p-6">
-      <div className="max-w-6xl mx-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
+    <div style={{ minHeight: '100vh', padding: '0 0 48px' }}>
+      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 20px' }}>
+
+        {/* Page header */}
+        <motion.div
+          initial={{ opacity: 0, y: -12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.45, ease }}
+          style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 32, marginBottom: 28 }}
+        >
           <div>
-            <h1 className="text-2xl font-bold text-white">Dashboard</h1>
-            <p className="text-zinc-500 text-sm mt-1">{scans.length} scans · {projects.length} projects</p>
+            <h1 style={{ fontFamily: 'var(--sans)', fontWeight: 800, fontSize: 28, letterSpacing: '-0.03em', color: 'var(--text-primary)', lineHeight: 1.1 }}>
+              Dashboard
+            </h1>
+            <p style={{ fontFamily: 'var(--sans)', fontSize: 13, color: 'var(--text-tertiary)', marginTop: 5 }}>
+              {scans.length} scan{scans.length !== 1 ? 's' : ''} · {projects.length} project{projects.length !== 1 ? 's' : ''}
+            </p>
           </div>
           <Link
             href="/"
-            className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-white text-sm rounded-lg transition-colors border border-zinc-700"
+            className="btn btn-primary"
+            style={{ fontSize: 13, padding: '10px 22px', minHeight: 40, borderRadius: 12 }}
           >
             + New Scan
           </Link>
-        </div>
+        </motion.div>
 
         {/* Stats row */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
-          {(['critical', 'high', 'medium', 'low'] as const).map(level => {
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, marginBottom: 24 }}>
+          {(['critical', 'high', 'medium', 'low'] as const).map((level, i) => {
             const count = scans.filter(s => s.overallRiskLevel === level).length;
+            const cfg = RISK_CFG[level];
             return (
-              <div key={level} className={`rounded-xl border p-4 ${RISK_COLORS[level]}`}>
-                <p className="text-xs uppercase tracking-wide opacity-70">{level}</p>
-                <p className="text-3xl font-bold mt-1">{count}</p>
-                <p className="text-xs opacity-60 mt-0.5">projects</p>
-              </div>
+              <motion.div
+                key={level}
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.06, ease }}
+                className="glass-cell"
+                style={{
+                  background: cfg.bg,
+                  boxShadow: `inset 0 1.5px 0 rgba(255,255,255,0.90), 0 0 0 0.5px ${cfg.outer}, 0 2px 8px rgba(10,8,40,0.06), 0 8px 24px rgba(10,8,40,0.08)`,
+                  padding: '20px 22px',
+                }}
+              >
+                <span className="cell-label">{level}</span>
+                <span className="cell-number cell-number-lg" style={{ color: cfg.color, marginTop: 8 }}>{count}</span>
+                <span style={{ display: 'block', fontFamily: 'var(--sans)', fontSize: 11, color: 'var(--text-tertiary)', marginTop: 4 }}>projects</span>
+              </motion.div>
             );
           })}
         </div>
 
         {/* Ecosystem filter */}
         {ecosystems.length > 2 && (
-          <div className="flex gap-2 mb-6 flex-wrap">
-            {ecosystems.map(eco => (
-              <button
-                key={eco}
-                onClick={() => setFilter(eco)}
-                className={`px-3 py-1 rounded-full text-sm border transition-colors ${
-                  filter === eco
-                    ? 'bg-zinc-700 border-zinc-500 text-white'
-                    : 'border-zinc-800 text-zinc-400 hover:text-white'
-                }`}
-              >
-                {eco === 'all' ? 'All' : `${ECOSYSTEM_ICONS[eco] ?? ''} ${eco}`}
-              </button>
-            ))}
-          </div>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.28, ease }}
+            style={{ display: 'flex', gap: 6, marginBottom: 20, flexWrap: 'wrap' }}
+          >
+            {ecosystems.map(eco => {
+              const active = filter === eco;
+              return (
+                <button
+                  key={eco}
+                  onClick={() => setFilter(eco)}
+                  style={{
+                    padding: '5px 14px', borderRadius: 999,
+                    fontFamily: 'var(--sans)', fontSize: 12, fontWeight: 600,
+                    color: active ? '#5E5CE6' : 'var(--text-tertiary)',
+                    background: active ? 'rgba(94,92,230,0.10)' : 'rgba(255,255,255,0.68)',
+                    border: active ? '1px solid rgba(94,92,230,0.24)' : '1px solid rgba(255,255,255,0.72)',
+                    boxShadow: active
+                      ? 'inset 0 1px 0 rgba(255,255,255,0.90), 0 0 0 0.5px rgba(94,92,230,0.18)'
+                      : 'inset 0 1px 0 rgba(255,255,255,0.90), 0 0 0 0.5px rgba(10,8,40,0.07)',
+                    cursor: 'pointer',
+                    transition: 'all 0.18s ease',
+                  }}
+                >
+                  {eco === 'all' ? 'All' : `${ECOSYSTEM_ICONS[eco] ?? ''} ${eco}`}
+                </button>
+              );
+            })}
+          </motion.div>
         )}
 
         {/* Project cards */}
         {projects.length === 0 ? (
-          <div className="text-center py-24 text-zinc-500">
-            <p className="text-lg">No scans yet</p>
-            <p className="text-sm mt-2">Run a scan from the <Link href="/" className="text-blue-400 hover:underline">home page</Link></p>
-          </div>
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3, ease }}
+            className="glass-cell"
+            style={{ padding: '64px 24px', textAlign: 'center' }}
+          >
+            <p style={{ fontFamily: 'var(--sans)', fontSize: 17, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 8 }}>
+              No scans yet
+            </p>
+            <p style={{ fontFamily: 'var(--sans)', fontSize: 14, color: 'var(--text-tertiary)' }}>
+              Run a scan from the{' '}
+              <Link href="/" style={{ color: 'var(--accent)', textDecoration: 'none', fontWeight: 600 }}>
+                home page
+              </Link>
+            </p>
+          </motion.div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 10 }}>
             {projects.map((scan, i) => {
               const projectScans = scans.filter(s => s.projectName === scan.projectName);
+              const cfg = RISK_CFG[scan.overallRiskLevel] ?? RISK_CFG.low;
               return (
                 <motion.div
                   key={scan.id}
-                  initial={{ opacity: 0, y: 12 }}
+                  initial={{ opacity: 0, y: 14 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.04 }}
-                  className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 hover:border-zinc-700 transition-colors group"
+                  transition={{ delay: i * 0.05, ease }}
+                  className="glass-cell group"
+                  style={{ padding: 22, cursor: 'default' }}
                 >
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm">{ECOSYSTEM_ICONS[scan.ecosystem] ?? '📦'}</span>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                        <span style={{ fontSize: 14 }}>{ECOSYSTEM_ICONS[scan.ecosystem] ?? '📦'}</span>
                         <Link
                           href={`/?scan=${scan.id}`}
-                          className="font-semibold text-white truncate hover:underline text-sm"
+                          style={{
+                            fontFamily: 'var(--sans)', fontWeight: 700, fontSize: 15,
+                            color: 'var(--text-primary)', textDecoration: 'none',
+                            letterSpacing: '-0.02em',
+                            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                          }}
+                          onMouseEnter={e => ((e.currentTarget as HTMLAnchorElement).style.color = 'var(--accent)')}
+                          onMouseLeave={e => ((e.currentTarget as HTMLAnchorElement).style.color = 'var(--text-primary)')}
                         >
                           {scan.projectName}
                         </Link>
                       </div>
-                      <p className="text-zinc-500 text-xs mt-0.5">
+                      <p style={{ fontFamily: 'var(--sans)', fontSize: 12, color: 'var(--text-tertiary)' }}>
                         {scan.totalDependencies} deps · {new Date(scan.timestamp).toLocaleDateString()}
                       </p>
                     </div>
-                    <span className={`text-xs font-semibold px-2 py-0.5 rounded border flex-shrink-0 ${RISK_COLORS[scan.overallRiskLevel]}`}>
+
+                    {/* Risk badge */}
+                    <span style={{
+                      display: 'inline-flex', alignItems: 'center', gap: 5,
+                      padding: '4px 11px', borderRadius: 999, flexShrink: 0,
+                      fontFamily: 'var(--sans)', fontSize: 11, fontWeight: 700, textTransform: 'capitalize',
+                      color: cfg.color, background: cfg.bg,
+                      border: '1px solid rgba(255,255,255,0.72)',
+                      boxShadow: `inset 0 1px 0 rgba(255,255,255,0.90), 0 0 0 0.5px ${cfg.outer}`,
+                    }}>
                       {scan.overallRiskLevel}
                     </span>
                   </div>
 
-                  <div className="mt-3">
-                    <div className="flex items-end justify-between">
-                      <span className="text-2xl font-bold text-white">{scan.overallScore}</span>
-                      <span className="text-zinc-500 text-xs">/100</span>
+                  {/* Score */}
+                  <div style={{ marginTop: 16 }}>
+                    <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between' }}>
+                      <span style={{ fontFamily: 'var(--sans)', fontWeight: 800, fontSize: 32, letterSpacing: '-0.04em', color: 'var(--text-primary)', lineHeight: 1 }}>
+                        {scan.overallScore}
+                      </span>
+                      <span style={{ fontFamily: 'var(--sans)', fontSize: 12, color: 'var(--text-quaternary)', marginBottom: 2 }}>
+                        / 100
+                      </span>
                     </div>
                     <ScoreBar score={scan.overallScore} />
                   </div>
 
                   {scan.criticalCount > 0 && (
-                    <p className="text-red-400 text-xs mt-2">{scan.criticalCount} critical dep{scan.criticalCount > 1 ? 's' : ''}</p>
+                    <p style={{ fontFamily: 'var(--sans)', fontSize: 12, fontWeight: 600, color: '#C5000A', marginTop: 10 }}>
+                      {scan.criticalCount} critical dep{scan.criticalCount > 1 ? 's' : ''}
+                    </p>
                   )}
 
-                  <div className="flex items-center justify-between mt-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <p className="text-zinc-600 text-xs">{projectScans.length} scan{projectScans.length > 1 ? 's' : ''}</p>
+                  {/* Hover actions */}
+                  <div style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    marginTop: 14, paddingTop: 12,
+                    borderTop: '1px solid rgba(10,8,40,0.07)',
+                    opacity: 0, transition: 'opacity 0.2s ease',
+                  }}
+                    className="group-hover:opacity-100"
+                  >
+                    <p style={{ fontFamily: 'var(--sans)', fontSize: 11, color: 'var(--text-quaternary)' }}>
+                      {projectScans.length} scan{projectScans.length > 1 ? 's' : ''}
+                    </p>
                     <button
                       onClick={() => handleDelete(scan.id)}
-                      className="text-zinc-600 hover:text-red-400 text-xs transition-colors"
+                      style={{
+                        fontFamily: 'var(--sans)', fontSize: 11, color: 'var(--text-quaternary)',
+                        background: 'none', border: 'none', cursor: 'pointer',
+                        transition: 'color 0.15s',
+                      }}
+                      onMouseEnter={e => ((e.currentTarget as HTMLButtonElement).style.color = '#D73027')}
+                      onMouseLeave={e => ((e.currentTarget as HTMLButtonElement).style.color = 'var(--text-quaternary)')}
                     >
                       Delete
                     </button>

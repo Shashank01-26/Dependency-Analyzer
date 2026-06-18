@@ -9,7 +9,7 @@ export default function ScoreRing({ score, size = 180, riskLevel, label }: { sco
   return (
     <div className="relative inline-flex items-center justify-center" style={{ width: size, height: size }}>
       <svg width={size} height={size} className="-rotate-90">
-        <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="rgba(15,10,46,0.08)" strokeWidth={7} />
+        <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="rgba(10,8,40,0.12)" strokeWidth={7} />
         <motion.circle cx={size/2} cy={size/2} r={r} fill="none" stroke={color} strokeWidth={7} strokeLinecap="round"
           strokeDasharray={c} initial={{ strokeDashoffset: c }}
           animate={{ strokeDashoffset: c - (score / 100) * c }}

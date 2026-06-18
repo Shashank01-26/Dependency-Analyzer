@@ -107,7 +107,7 @@ export default function SplashScreen({ onComplete }: { onComplete: () => void })
               </p>
               <p style={{
                 fontFamily: 'var(--sans)', fontWeight: 400, fontSize: 13,
-                color: 'rgba(15,10,46,0.36)', marginTop: 7, letterSpacing: '0.01em',
+                color: 'rgba(10,8,40,0.52)', marginTop: 7, letterSpacing: '0.01em',
               }}>
                 Dependency Risk Analyzer
               </p>
@@ -147,7 +147,7 @@ export default function SplashScreen({ onComplete }: { onComplete: () => void })
             style={{
               marginTop: 24,
               fontFamily: 'var(--sans)', fontSize: 13, fontWeight: 400,
-              color: 'rgba(15,10,46,0.28)', letterSpacing: '0.02em',
+              color: 'rgba(10,8,40,0.46)', letterSpacing: '0.02em',
             }}
           >
             npm · Rust · Go · Python · Flutter · Android · Ruby · .NET

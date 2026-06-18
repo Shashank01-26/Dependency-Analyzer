@@ -202,7 +202,7 @@ export default function PackageInput({ onSubmit, loading }: Props) {
         {(['paste', 'upload', 'github'] as const).map(m => (
           <button key={m} onClick={() => setMode(m)}
             className="relative px-6 h-14 text-sm font-semibold transition-colors"
-            style={{ color: mode === m ? 'var(--white)' : 'var(--text-3)' }}>
+            style={{ color: mode === m ? 'var(--white)' : 'var(--text-tertiary)' }}>
             {m === 'paste' ? '📋 Paste Code' : m === 'upload' ? '📁 Upload File' : '🐙 GitHub URL'}
             {mode === m && <motion.div layoutId="itab" className="absolute bottom-0 inset-x-0 h-[3px] rounded-t-full"
               style={{ background: 'linear-gradient(90deg, var(--blue), var(--violet))' }}
@@ -243,7 +243,7 @@ export default function PackageInput({ onSubmit, loading }: Props) {
                 {(['npm', 'flutter', 'android'] as Ecosystem[]).map(eco => (
                   <button key={eco} onClick={() => setSampleEco(eco)}
                     className="flex-1 py-3 text-xs font-semibold text-center transition-all relative"
-                    style={{ color: sampleEco === eco ? 'rgba(15,10,46,0.88)' : 'rgba(15,10,46,0.36)' }}>
+                    style={{ color: sampleEco === eco ? 'rgba(10,8,40,0.90)' : 'rgba(10,8,40,0.54)' }}>
                     {ECO_META[eco]?.icon} {ECO_META[eco]?.label}
                     {sampleEco === eco && (
                       <motion.div layoutId="sampleTab" className="absolute bottom-0 inset-x-2 h-[2px] rounded-full"
@@ -273,8 +273,8 @@ export default function PackageInput({ onSubmit, loading }: Props) {
                         {isRisky ? '⚠️' : '✅'}
                       </div>
                       <div>
-                        <div style={{ fontFamily: 'var(--sans)', fontSize: 13, fontWeight: 600, color: 'rgba(15,10,46,0.86)' }}>{s.label}</div>
-                        <div style={{ fontFamily: 'var(--sans)', fontSize: 11, marginTop: 2, color: 'rgba(15,10,46,0.44)' }}>{s.desc}</div>
+                        <div style={{ fontFamily: 'var(--sans)', fontSize: 13, fontWeight: 600, color: 'rgba(10,8,40,0.90)' }}>{s.label}</div>
+                        <div style={{ fontFamily: 'var(--sans)', fontSize: 11, marginTop: 2, color: 'rgba(10,8,40,0.58)' }}>{s.desc}</div>
                       </div>
                     </button>
                   );

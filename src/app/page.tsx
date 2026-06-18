@@ -14,7 +14,7 @@ type Tab = 'table' | 'graph' | 'insights';
 
 /* ── Risk level → iOS color ── */
 function riskColor(level: string): string {
-  return ({ critical: '#D70015', high: '#FF3B30', medium: '#FF9500', low: '#34C759' })[level] ?? 'rgba(15,10,46,0.50)';
+  return ({ critical: '#C5000A', high: '#D73027', medium: '#B36200', low: '#28904A' })[level] ?? 'rgba(10,8,40,0.60)';
 }
 
 /* ── Risk level → glass tint class ── */
@@ -153,7 +153,7 @@ export default function Home() {
                         </span>
                       </h1>
                       <p style={{
-                        fontFamily: 'var(--sans)', fontSize: 15, color: 'rgba(15,10,46,0.48)',
+                        fontFamily: 'var(--sans)', fontSize: 15, color: 'rgba(10,8,40,0.64)',
                         lineHeight: 1.65, marginTop: 16, maxWidth: 460, fontWeight: 400,
                       }}>
                         Multi-ecosystem scanner across npm, Rust, Go, Python, Flutter, Android,
@@ -180,7 +180,7 @@ export default function Home() {
                     <span className="cell-label">{s.label}</span>
                     <div>
                       <span className="cell-number cell-number-md" style={{ color: '#5E5CE6', marginBottom: 6 }}>{s.value}</span>
-                      <span className="cell-label" style={{ color: 'rgba(15,10,46,0.28)' }}>{s.sub}</span>
+                      <span className="cell-label" style={{ color: 'rgba(10,8,40,0.46)' }}>{s.sub}</span>
                     </div>
                   </motion.div>
                 ))}
@@ -191,9 +191,9 @@ export default function Home() {
                   initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.28, ease }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
                     <span style={{ fontSize: 15 }}>🔗</span>
-                    <span className="cell-label" style={{ color: 'rgba(129,140,248,0.75)' }}>Supply Chain</span>
+                    <span className="cell-label" style={{ color: 'rgba(129,140,248,0.92)' }}>Supply Chain</span>
                   </div>
-                  <p style={{ fontFamily: 'var(--sans)', fontSize: 13, color: 'rgba(15,10,46,0.38)', lineHeight: 1.65, fontWeight: 400 }}>
+                  <p style={{ fontFamily: 'var(--sans)', fontSize: 13, color: 'rgba(10,8,40,0.60)', lineHeight: 1.65, fontWeight: 400 }}>
                     Typosquatting detection, install-script flags, license compliance,
                     SBOM export (SPDX 2.3 + CycloneDX 1.5), CI policy engine.
                   </p>
@@ -212,8 +212,8 @@ export default function Home() {
                     <div style={{ display: 'flex', gap: 14 }}>
                       <span style={{ fontSize: 22, lineHeight: 1, flexShrink: 0, marginTop: 1 }}>{f.icon}</span>
                       <div>
-                        <p style={{ fontFamily: 'var(--sans)', fontSize: 13, fontWeight: 600, color: 'rgba(15,10,46,0.75)', marginBottom: 6 }}>{f.label}</p>
-                        <p style={{ fontFamily: 'var(--sans)', fontSize: 13, color: 'rgba(15,10,46,0.38)', lineHeight: 1.65, fontWeight: 400 }}>{f.desc}</p>
+                        <p style={{ fontFamily: 'var(--sans)', fontSize: 13, fontWeight: 600, color: 'rgba(10,8,40,0.86)', marginBottom: 6 }}>{f.label}</p>
+                        <p style={{ fontFamily: 'var(--sans)', fontSize: 13, color: 'rgba(10,8,40,0.60)', lineHeight: 1.65, fontWeight: 400 }}>{f.desc}</p>
                       </div>
                     </div>
                   </motion.div>
@@ -272,7 +272,7 @@ export default function Home() {
                   initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.13, ease }}>
                   <span className="cell-label">Project</span>
                   <div>
-                    <span className="cell-number" style={{ fontSize: 'clamp(20px, 2.5vw, 32px)', marginBottom: 12, color: 'rgba(15,10,46,0.90)' }}>
+                    <span className="cell-number" style={{ fontSize: 'clamp(20px, 2.5vw, 32px)', marginBottom: 12, color: 'var(--text-primary)' }}>
                       {scan.projectName}
                     </span>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
@@ -283,7 +283,7 @@ export default function Home() {
                       }}>
                         {ecoLabel(scan.ecosystem)}
                       </span>
-                      <span style={{ fontFamily: 'var(--sans)', fontSize: 12, color: 'rgba(15,10,46,0.28)', fontWeight: 400 }}>
+                      <span style={{ fontFamily: 'var(--sans)', fontSize: 12, color: 'rgba(10,8,40,0.46)', fontWeight: 400 }}>
                         {new Date(scan.timestamp).toLocaleString()}
                       </span>
                     </div>
@@ -299,7 +299,7 @@ export default function Home() {
                   </div>
                   <div>
                     <span className="cell-number cell-number-xl"
-                      style={{ color: scan.criticalCount > 0 ? '#FF3B30' : 'rgba(15,10,46,0.18)' }}>
+                      style={{ color: scan.criticalCount > 0 ? '#D73027' : 'rgba(10,8,40,0.24)' }}>
                       {scan.criticalCount}
                     </span>
                     <span className="cell-label" style={{ marginTop: 4 }}>critical risk deps</span>
@@ -308,9 +308,9 @@ export default function Home() {
 
                 {/* Row 2: stat quartet — col 5-12 */}
                 {[
-                  { label: 'Total Deps', value: scan.totalDependencies, color: 'rgba(15,10,46,0.85)', col: '5 / 7' },
-                  { label: 'High Risk',  value: scan.highCount,         color: scan.highCount   > 0 ? '#FF3B30' : 'rgba(15,10,46,0.28)', col: '7 / 9' },
-                  { label: 'Medium',     value: scan.mediumCount,       color: scan.mediumCount > 0 ? '#FF9500' : 'rgba(15,10,46,0.28)', col: '9 / 11' },
+                  { label: 'Total Deps', value: scan.totalDependencies, color: 'var(--text-primary)', col: '5 / 7' },
+                  { label: 'High Risk',  value: scan.highCount,         color: scan.highCount   > 0 ? '#D73027' : 'rgba(10,8,40,0.30)', col: '7 / 9' },
+                  { label: 'Medium',     value: scan.mediumCount,       color: scan.mediumCount > 0 ? '#B36200' : 'rgba(10,8,40,0.30)', col: '9 / 11' },
                   { label: 'Low Risk',   value: scan.lowCount,          color: '#34C759',                col: '11 / 13' },
                 ].map((m, i) => (
                   <motion.div key={m.label} className="glass-cell"
@@ -323,8 +323,8 @@ export default function Home() {
 
                 {/* Row 3: detail strip — col 1-12 */}
                 {[
-                  { label: 'Direct',          value: scan.directDependencies,    col: '1 / 4',   color: 'rgba(15,10,46,0.70)' },
-                  { label: 'Dev Deps',        value: scan.devDependencies,       col: '4 / 7',   color: 'rgba(15,10,46,0.40)' },
+                  { label: 'Direct',          value: scan.directDependencies,    col: '1 / 4',   color: 'var(--text-primary)' },
+                  { label: 'Dev Deps',        value: scan.devDependencies,       col: '4 / 7',   color: 'var(--text-secondary)' },
                   { label: 'Vulnerabilities', value: scan.dependencies.reduce((s, d) => s + d.vulnerabilities.length, 0),
                     col: '7 / 10', color: scan.dependencies.some(d => d.vulnerabilities.length > 0) ? '#FF3B30' : '#34C759' },
                   { label: 'Ecosystem',       value: ecoLabel(scan.ecosystem),   col: '10 / 13', color: '#5E5CE6', mono: true },
@@ -364,7 +364,7 @@ export default function Home() {
                             marginBottom: -1, cursor: 'pointer', transition: 'all 0.2s ease',
                             fontFamily: 'var(--sans)', fontSize: 13, fontWeight: active ? 600 : 500,
                             letterSpacing: '-0.01em',
-                            color: active ? '#5E5CE6' : 'rgba(15,10,46,0.35)',
+                            color: active ? '#5E5CE6' : 'rgba(10,8,40,0.54)',
                           }}>
                           {t.label}
                           {t.count != null && (
@@ -372,7 +372,7 @@ export default function Home() {
                               fontFamily: 'var(--sans)', fontSize: 11, fontWeight: 600,
                               padding: '2px 8px', borderRadius: 999,
                               background: active ? 'rgba(94,92,230,0.10)' : 'rgba(0,0,0,0.05)',
-                              color: active ? '#5E5CE6' : 'rgba(15,10,46,0.28)',
+                              color: active ? '#5E5CE6' : 'rgba(10,8,40,0.44)',
                             }}>{t.count}</span>
                           )}
                           {t.pulsing && (
@@ -416,7 +416,7 @@ export default function Home() {
       }}>
         <div style={{
           maxWidth: 1440, margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-          fontFamily: 'var(--sans)', fontSize: 12, color: 'rgba(15,10,46,0.28)', fontWeight: 400,
+          fontFamily: 'var(--sans)', fontSize: 12, color: 'rgba(10,8,40,0.44)', fontWeight: 400,
         }}>
           <span>DepScope v2.0</span>
           <span>AI: Llama 3.3 70B · Groq · OSV · npm audit</span>

@@ -77,7 +77,7 @@ export default function DependencyTable({ dependencies }: { dependencies: Analyz
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>{dep.name}</span>
-                    <span className="text-xs font-mono" style={{ color: 'var(--text-dim)' }}>{dep.version}</span>
+                    <span className="text-xs font-mono" style={{ color: 'var(--text-quaternary)' }}>{dep.version}</span>
                     {dep.isDev && <span className="pill !py-0 !px-2 !text-[10px]" style={{ background: 'rgba(79,143,247,0.1)', color: 'var(--blue)' }}>DEV</span>}
                   </div>
                 </td>

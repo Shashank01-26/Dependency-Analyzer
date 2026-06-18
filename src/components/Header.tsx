@@ -84,13 +84,13 @@ export default function Header() {
               fontFamily: 'var(--sans)',
               fontSize: 13,
               fontWeight: 500,
-              color: 'rgba(15,10,46,0.38)',
+              color: 'rgba(10,8,40,0.54)',
               textDecoration: 'none',
               transition: 'color 0.2s',
               letterSpacing: '-0.01em',
             }}
-            onMouseEnter={e => (e.currentTarget.style.color = 'rgba(15,10,46,0.82)')}
-            onMouseLeave={e => (e.currentTarget.style.color = 'rgba(15,10,46,0.38)')}
+            onMouseEnter={e => (e.currentTarget.style.color = 'rgba(10,8,40,0.88)')}
+            onMouseLeave={e => (e.currentTarget.style.color = 'rgba(10,8,40,0.54)')}
           >
             Dashboard
           </Link>

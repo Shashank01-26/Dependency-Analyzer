@@ -8,18 +8,18 @@ interface Props {
   onClose: () => void;
 }
 
-const SEVERITY_COLORS: Record<string, string> = {
-  critical: 'text-red-400 bg-red-950/60 border-red-800',
-  high: 'text-orange-400 bg-orange-950/60 border-orange-800',
-  moderate: 'text-yellow-400 bg-yellow-950/60 border-yellow-800',
-  low: 'text-green-400 bg-green-950/60 border-green-800',
+const SEVERITY_CFG: Record<string, { bg: string; color: string; border: string }> = {
+  critical: { bg: 'rgba(197,0,10,0.08)',  color: '#C5000A', border: 'rgba(197,0,10,0.22)'  },
+  high:     { bg: 'rgba(255,59,48,0.08)', color: '#D73027', border: 'rgba(255,59,48,0.22)' },
+  moderate: { bg: 'rgba(255,149,0,0.08)', color: '#B36200', border: 'rgba(255,149,0,0.22)' },
+  low:      { bg: 'rgba(52,199,89,0.08)', color: '#28904A', border: 'rgba(52,199,89,0.22)' },
 };
 
 function cvssColor(score: number): string {
-  if (score >= 9) return 'text-red-400';
-  if (score >= 7) return 'text-orange-400';
-  if (score >= 4) return 'text-yellow-400';
-  return 'text-green-400';
+  if (score >= 9) return '#C5000A';
+  if (score >= 7) return '#D73027';
+  if (score >= 4) return '#B36200';
+  return '#28904A';
 }
 
 export default function CVEDetailDrawer({ vuln, onClose }: Props) {
@@ -27,35 +27,68 @@ export default function CVEDetailDrawer({ vuln, onClose }: Props) {
     <AnimatePresence>
       {vuln && (
         <>
-          {/* Backdrop */}
+          {/* Backdrop — frosted, not black */}
           <motion.div
-            className="fixed inset-0 bg-black/50 z-40"
+            className="fixed inset-0 z-40"
+            style={{ background: 'rgba(10,8,40,0.24)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)' }}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
           />
 
-          {/* Drawer */}
+          {/* Drawer — iOS glass panel */}
           <motion.aside
-            className="fixed right-0 top-0 h-full w-full max-w-md bg-zinc-900 border-l border-zinc-800 z-50 flex flex-col shadow-2xl"
+            className="fixed right-0 top-0 h-full w-full max-w-md z-50 flex flex-col"
+            style={{
+              background: 'rgba(245,246,252,0.94)',
+              backdropFilter: 'blur(60px) saturate(200%) brightness(1.01)',
+              WebkitBackdropFilter: 'blur(60px) saturate(200%) brightness(1.01)',
+              borderLeft: '1px solid rgba(255,255,255,0.70)',
+              boxShadow: '-8px 0 48px rgba(10,8,40,0.14), -2px 0 10px rgba(10,8,40,0.08), inset 1px 0 0 rgba(255,255,255,0.60)',
+            }}
             initial={{ x: '100%' }}
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
-            transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 32 }}
           >
             {/* Header */}
-            <div className="flex items-start justify-between p-5 border-b border-zinc-800">
+            <div
+              className="flex items-start justify-between p-5"
+              style={{ borderBottom: '1px solid rgba(10,8,40,0.08)' }}
+            >
               <div className="flex-1 min-w-0">
-                <div className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-xs font-semibold uppercase tracking-wide border mb-2 ${SEVERITY_COLORS[vuln.severity] ?? SEVERITY_COLORS.low}`}>
-                  {vuln.severity}
-                </div>
-                <h2 className="text-white font-semibold text-sm leading-snug">{vuln.title}</h2>
-                <p className="text-zinc-500 text-xs mt-1 font-mono">{vuln.id}</p>
+                {/* Severity badge */}
+                {(() => {
+                  const cfg = SEVERITY_CFG[vuln.severity] ?? SEVERITY_CFG.low;
+                  return (
+                    <div
+                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-3"
+                      style={{ background: cfg.bg, color: cfg.color, border: `1px solid ${cfg.border}` }}
+                    >
+                      {vuln.severity}
+                    </div>
+                  );
+                })()}
+                <h2 style={{ fontFamily: 'var(--sans)', fontWeight: 600, fontSize: 15, color: 'var(--text-primary)', lineHeight: 1.4 }}>
+                  {vuln.title}
+                </h2>
+                <p style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--text-tertiary)', marginTop: 5, letterSpacing: '0.02em' }}>
+                  {vuln.id}
+                </p>
               </div>
               <button
                 onClick={onClose}
-                className="ml-3 text-zinc-500 hover:text-white transition-colors text-xl leading-none"
+                className="ml-3 flex items-center justify-center flex-shrink-0 transition-all"
+                style={{
+                  width: 30, height: 30, borderRadius: '50%',
+                  background: 'rgba(10,8,40,0.07)',
+                  border: '1px solid rgba(10,8,40,0.09)',
+                  color: 'var(--text-tertiary)',
+                  fontSize: 17, lineHeight: 1,
+                }}
+                onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(10,8,40,0.12)'; (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-primary)'; }}
+                onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(10,8,40,0.07)'; (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-tertiary)'; }}
                 aria-label="Close"
               >
                 ×
@@ -63,58 +96,109 @@ export default function CVEDetailDrawer({ vuln, onClose }: Props) {
             </div>
 
             {/* Body */}
-            <div className="flex-1 overflow-y-auto p-5 space-y-5">
+            <div className="flex-1 overflow-y-auto p-5 space-y-4">
 
               {/* CVSS score */}
               {vuln.cvss !== undefined && (
-                <div className="bg-zinc-800/60 rounded-lg p-4">
-                  <p className="text-zinc-400 text-xs uppercase tracking-wide mb-1">CVSS Score</p>
-                  <span className={`text-3xl font-bold ${cvssColor(vuln.cvss)}`}>
+                <div
+                  className="rounded-2xl p-4"
+                  style={{
+                    background: 'rgba(255,255,255,0.70)',
+                    border: '1px solid rgba(255,255,255,0.72)',
+                    boxShadow: 'inset 0 1.5px 0 rgba(255,255,255,0.90), 0 0 0 0.5px rgba(10,8,40,0.08)',
+                  }}
+                >
+                  <p style={{ fontFamily: 'var(--sans)', fontSize: 10, fontWeight: 600, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 6 }}>
+                    CVSS Score
+                  </p>
+                  <span style={{ fontFamily: 'var(--sans)', fontSize: 36, fontWeight: 800, letterSpacing: '-0.03em', color: cvssColor(vuln.cvss) }}>
                     {vuln.cvss.toFixed(1)}
                   </span>
                   {vuln.cvssVector && (
-                    <p className="text-zinc-500 text-xs font-mono mt-1 break-all">{vuln.cvssVector}</p>
+                    <p style={{ fontFamily: 'var(--mono)', fontSize: 10, color: 'var(--text-quaternary)', marginTop: 4, wordBreak: 'break-all', lineHeight: 1.5 }}>
+                      {vuln.cvssVector}
+                    </p>
                   )}
                 </div>
               )}
 
               {/* EPSS */}
               {vuln.epss !== undefined && (
-                <div className="bg-zinc-800/60 rounded-lg p-4">
-                  <p className="text-zinc-400 text-xs uppercase tracking-wide mb-1">Exploit Probability (EPSS)</p>
-                  <span className="text-2xl font-bold text-white">
+                <div
+                  className="rounded-2xl p-4"
+                  style={{
+                    background: 'rgba(255,255,255,0.70)',
+                    border: '1px solid rgba(255,255,255,0.72)',
+                    boxShadow: 'inset 0 1.5px 0 rgba(255,255,255,0.90), 0 0 0 0.5px rgba(10,8,40,0.08)',
+                  }}
+                >
+                  <p style={{ fontFamily: 'var(--sans)', fontSize: 10, fontWeight: 600, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 6 }}>
+                    Exploit Probability (EPSS)
+                  </p>
+                  <span style={{ fontFamily: 'var(--sans)', fontSize: 30, fontWeight: 800, letterSpacing: '-0.03em', color: 'var(--text-primary)' }}>
                     {(vuln.epss * 100).toFixed(2)}%
                   </span>
-                  <p className="text-zinc-500 text-xs mt-1">Probability of exploitation in the next 30 days</p>
+                  <p style={{ fontFamily: 'var(--sans)', fontSize: 12, color: 'var(--text-tertiary)', marginTop: 4 }}>
+                    Probability of exploitation in the next 30 days
+                  </p>
                 </div>
               )}
 
               {/* Fix version */}
               {vuln.fixedIn && (
-                <div className="bg-emerald-950/40 border border-emerald-900 rounded-lg p-4">
-                  <p className="text-emerald-400 text-xs uppercase tracking-wide mb-1">Fixed In</p>
-                  <p className="text-white font-mono text-sm">{vuln.fixedIn}</p>
-                  <p className="text-zinc-400 text-xs mt-1">Upgrade to this version or higher to resolve</p>
+                <div
+                  className="rounded-2xl p-4"
+                  style={{
+                    background: 'rgba(244,255,249,0.84)',
+                    border: '1px solid rgba(255,255,255,0.72)',
+                    boxShadow: 'inset 0 1.5px 0 rgba(255,255,255,0.90), 0 0 0 0.5px rgba(52,199,89,0.18)',
+                  }}
+                >
+                  <p style={{ fontFamily: 'var(--sans)', fontSize: 10, fontWeight: 600, color: '#28904A', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 6 }}>
+                    Fixed In
+                  </p>
+                  <p style={{ fontFamily: 'var(--mono)', fontSize: 15, fontWeight: 600, color: 'var(--text-primary)' }}>{vuln.fixedIn}</p>
+                  <p style={{ fontFamily: 'var(--sans)', fontSize: 12, color: 'var(--text-tertiary)', marginTop: 4 }}>
+                    Upgrade to this version or higher to resolve
+                  </p>
                 </div>
               )}
 
               {/* Affected range */}
               {vuln.range && (
                 <div>
-                  <p className="text-zinc-400 text-xs uppercase tracking-wide mb-1">Affected Versions</p>
-                  <p className="text-white font-mono text-sm bg-zinc-800 px-2 py-1 rounded">{vuln.range}</p>
+                  <p style={{ fontFamily: 'var(--sans)', fontSize: 10, fontWeight: 600, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 6 }}>
+                    Affected Versions
+                  </p>
+                  <p style={{
+                    fontFamily: 'var(--mono)', fontSize: 13, color: 'var(--text-primary)',
+                    background: 'rgba(10,8,40,0.04)', padding: '6px 12px', borderRadius: 8,
+                    display: 'inline-block',
+                  }}>
+                    {vuln.range}
+                  </p>
                 </div>
               )}
 
               {/* Transitive path */}
               {vuln.path && vuln.path.length > 0 && (
                 <div>
-                  <p className="text-zinc-400 text-xs uppercase tracking-wide mb-2">Dependency Path</p>
+                  <p style={{ fontFamily: 'var(--sans)', fontSize: 10, fontWeight: 600, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 8 }}>
+                    Dependency Path
+                  </p>
                   <div className="flex flex-wrap items-center gap-1">
                     {vuln.path.map((pkg, i) => (
                       <span key={i} className="flex items-center gap-1">
-                        <span className="bg-zinc-800 text-zinc-200 text-xs px-2 py-0.5 rounded font-mono">{pkg}</span>
-                        {i < vuln.path!.length - 1 && <span className="text-zinc-600 text-xs">→</span>}
+                        <span style={{
+                          fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--text-primary)',
+                          background: 'rgba(255,255,255,0.80)', padding: '3px 8px', borderRadius: 6,
+                          border: '1px solid rgba(10,8,40,0.09)',
+                        }}>
+                          {pkg}
+                        </span>
+                        {i < vuln.path!.length - 1 && (
+                          <span style={{ color: 'var(--text-quaternary)', fontSize: 11 }}>→</span>
+                        )}
                       </span>
                     ))}
                   </div>
@@ -122,15 +206,17 @@ export default function CVEDetailDrawer({ vuln, onClose }: Props) {
               )}
 
               {/* Links */}
-              <div className="space-y-2">
+              <div style={{ paddingTop: 4 }} className="space-y-2">
                 {vuln.nvdUrl && (
                   <a
                     href={vuln.nvdUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-2 text-blue-400 hover:text-blue-300 text-sm transition-colors"
+                    style={{ display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'var(--sans)', fontSize: 13, color: 'var(--accent)', fontWeight: 500, textDecoration: 'none' }}
+                    onMouseEnter={e => (e.currentTarget.style.color = 'var(--accent-deep)')}
+                    onMouseLeave={e => (e.currentTarget.style.color = 'var(--accent)')}
                   >
-                    <span>↗</span> View on NVD
+                    <span style={{ fontSize: 11 }}>↗</span> View on NVD
                   </a>
                 )}
                 {vuln.url && vuln.url !== vuln.nvdUrl && (
@@ -138,9 +224,11 @@ export default function CVEDetailDrawer({ vuln, onClose }: Props) {
                     href={vuln.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-2 text-blue-400 hover:text-blue-300 text-sm transition-colors"
+                    style={{ display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'var(--sans)', fontSize: 13, color: 'var(--accent)', fontWeight: 500, textDecoration: 'none' }}
+                    onMouseEnter={e => (e.currentTarget.style.color = 'var(--accent-deep)')}
+                    onMouseLeave={e => (e.currentTarget.style.color = 'var(--accent)')}
                   >
-                    <span>↗</span> Advisory Details
+                    <span style={{ fontSize: 11 }}>↗</span> Advisory Details
                   </a>
                 )}
               </div>

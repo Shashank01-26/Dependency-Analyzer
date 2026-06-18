@@ -147,8 +147,8 @@ export default function DependencyGraph({ tree }: { tree: DependencyTreeNode[] }
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3 px-6 py-4 border-b" style={{ borderColor: 'var(--border)' }}>
         <div className="flex items-center gap-3">
-          <h3 className="text-sm font-bold text-white uppercase tracking-wide">Dependency Graph</h3>
-          <span className="text-xs" style={{ color: 'var(--text-dim)' }}>
+          <h3 className="text-sm font-bold uppercase tracking-wide" style={{ color: 'var(--text-primary)' }}>Dependency Graph</h3>
+          <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
             {roots.length} of {allRoots.length} shown
           </span>
         </div>
@@ -386,7 +386,7 @@ export default function DependencyGraph({ tree }: { tree: DependencyTreeNode[] }
                 </div>
 
                 <div className="mb-5">
-                  <div className="text-base font-bold text-white mb-2">{selectedRoot.name}</div>
+                  <div className="text-base font-bold mb-2" style={{ color: 'var(--text-primary)' }}>{selectedRoot.name}</div>
                   <div className="flex items-center gap-3">
                     <span className="pill" style={{ background: SOFT[selectedRoot.riskLevel], color: COLORS[selectedRoot.riskLevel], fontSize: 11, fontWeight: 700, textTransform: 'uppercase' }}>
                       {selectedRoot.riskLevel}
