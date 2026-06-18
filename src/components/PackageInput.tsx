@@ -330,8 +330,12 @@ export default function PackageInput({ onSubmit, loading }: Props) {
 
         <div className="mt-6 flex flex-col sm:flex-row gap-4 items-start sm:items-center">
           {mode === 'github' ? (
-            <button onClick={submitGithub} disabled={fetchingRepo || !githubUrl.trim()} className="btn btn-primary w-full sm:w-auto">
-              {fetchingRepo ? <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />Fetching...</> : '🐙 Fetch & Analyze'}
+            <button onClick={submitGithub} disabled={fetchingRepo || loading || !githubUrl.trim()} className="btn btn-primary w-full sm:w-auto">
+              {fetchingRepo
+                ? <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />Fetching repo...</>
+                : loading
+                  ? <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />Analyzing...</>
+                  : '🐙 Fetch & Analyze'}
             </button>
           ) : (
             <button onClick={submit} disabled={loading || !text.trim()} className="btn btn-primary w-full sm:w-auto">
