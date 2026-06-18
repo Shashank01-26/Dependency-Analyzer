@@ -1,18 +1,19 @@
 'use client';
 import { motion } from 'framer-motion';
 
-export default function StatCard({ label, value, accent = 'var(--white)', delay = 0, icon }: {
+export default function StatCard({ label, value, accent = 'rgba(255,255,255,0.94)', delay = 0 }: {
   label: string; value: string | number; accent?: string; delay?: number; icon?: string;
 }) {
   return (
-    <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay }}
-      whileHover={{ y: -3, borderColor: 'var(--border-2)', transition: { duration: 0.2 } }}
-      className="card p-5 cursor-default">
-      <div className="flex items-center gap-2 mb-2">
-        {icon && <span className="text-lg">{icon}</span>}
-        <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-3)' }}>{label}</span>
-      </div>
-      <span className="text-3xl font-extrabold block" style={{ color: accent }}>{value}</span>
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.45, delay, ease: [0.25, 0.1, 0.25, 1] }}
+      className="glass-cell"
+      style={{ padding: 20, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: 100 }}
+    >
+      <span className="cell-label">{label}</span>
+      <span className="cell-number cell-number-md" style={{ color: accent, marginTop: 10 }}>{value}</span>
     </motion.div>
   );
 }

@@ -8,21 +8,32 @@ const ICONS: Record<RiskFlag['type'], string> = {
   'unpinned-version': '📌', 'license-risk': '⚖',
 };
 
+const COLORS: Record<string, { color: string; bg: string; border: string }> = {
+  high:    { color: '#F87171', bg: 'rgba(248,113,113,0.10)', border: 'rgba(248,113,113,0.22)' },
+  critical:{ color: '#F43F5E', bg: 'rgba(244,63,94,0.10)',   border: 'rgba(244,63,94,0.24)'   },
+  medium:  { color: '#FBBF24', bg: 'rgba(251,191,36,0.10)',  border: 'rgba(251,191,36,0.22)'  },
+  low:     { color: 'rgba(255,255,255,0.36)', bg: 'rgba(255,255,255,0.05)', border: 'rgba(255,255,255,0.10)' },
+};
+
 export default function FlagPill({ flag }: { flag: RiskFlag }) {
-  // Low-popularity is always neutral, never red
   const isNeutral = flag.type === 'low-popularity';
-  const color = isNeutral
-    ? 'var(--text-3)'
-    : flag.severity === 'critical' || flag.severity === 'high'
-      ? 'var(--rose)'
-      : flag.severity === 'medium'
-        ? 'var(--amber)'
-        : 'var(--text-3)';
+  const key = isNeutral ? 'low' : flag.severity ?? 'low';
+  const { color, bg, border } = COLORS[key] ?? COLORS.low;
 
   return (
-    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium"
-      style={{ background: 'var(--bg)', color, border: '1px solid var(--border)' }} title={flag.detail}>
-      <span>{ICONS[flag.type]}</span>{flag.label}
+    <span
+      title={flag.detail}
+      style={{
+        display: 'inline-flex', alignItems: 'center', gap: 5,
+        padding: '4px 10px', borderRadius: 999,
+        background: bg, border: `1px solid ${border}`,
+        fontFamily: 'var(--sans)', fontSize: 11, fontWeight: 600, color,
+        letterSpacing: '0.01em', whiteSpace: 'nowrap',
+        backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)',
+      }}
+    >
+      <span style={{ fontSize: 11 }}>{ICONS[flag.type]}</span>
+      {flag.label}
     </span>
   );
 }

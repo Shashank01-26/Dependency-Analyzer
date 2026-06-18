@@ -6,168 +6,420 @@ import SplashScreen from '@/components/SplashScreen';
 import Header from '@/components/Header';
 import PackageInput from '@/components/PackageInput';
 import ScoreRing from '@/components/ScoreRing';
-import StatCard from '@/components/StatCard';
 import DependencyTable from '@/components/DependencyTable';
 import DependencyGraph from '@/components/DependencyGraph';
 import InsightsPanel from '@/components/InsightsPanel';
 
 type Tab = 'table' | 'graph' | 'insights';
 
+/* ── Risk level → iOS color ── */
+function riskColor(level: string): string {
+  return ({ critical: '#F43F5E', high: '#F87171', medium: '#FBBF24', low: '#34D399' })[level] ?? 'rgba(255,255,255,0.5)';
+}
+
+/* ── Risk level → glass tint class ── */
+function riskGlass(level: string): string {
+  return ({ critical: 'glass-danger', high: 'glass-warn', medium: 'glass-warn', low: 'glass-safe' })[level] ?? '';
+}
+
+/* ── Ecosystem display label ── */
+function ecoLabel(eco: string): string {
+  return ({
+    npm: '⬡ npm', flutter: '◈ Flutter', android: '△ Android',
+    python: '◆ Python', rust: '◉ Rust', go: '◎ Go', ruby: '◇ Ruby', dotnet: '⬡ .NET',
+  })[eco] ?? eco;
+}
+
+/* ── Stagger ease ── */
+const ease = [0.25, 0.1, 0.25, 1] as const;
+
 export default function Home() {
-  const [splashDone, setSplashDone] = useState(false);
-  const [scan, setScan] = useState<ScanResult | null>(null);
-  const [insights, setInsights] = useState<AIInsight[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [splashDone, setSplashDone]           = useState(false);
+  const [scan, setScan]                       = useState<ScanResult | null>(null);
+  const [insights, setInsights]               = useState<AIInsight[]>([]);
+  const [loading, setLoading]                 = useState(false);
   const [insightsLoading, setInsightsLoading] = useState(false);
-  const [tab, setTab] = useState<Tab>('table');
-  const [error, setError] = useState<string | null>(null);
+  const [tab, setTab]                         = useState<Tab>('table');
+  const [error, setError]                     = useState<string | null>(null);
 
   const analyze = useCallback(async (raw: string) => {
     setLoading(true); setError(null); setScan(null); setInsights([]);
     try {
-      const res = await fetch('/api/analyze', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ raw }) });
-      if (!res.ok) throw new Error((await res.json()).error || 'Failed');
+      const res = await fetch('/api/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ raw }),
+      });
+      if (!res.ok) throw new Error((await res.json()).error || 'Analysis failed');
       const result: ScanResult = await res.json();
       setScan(result);
       setInsightsLoading(true);
-      fetch('/api/insights', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(result) })
-        .then(r => r.json()).then(d => setInsights(d.insights || [])).catch(() => {}).finally(() => setInsightsLoading(false));
-    } catch (e) { setError(e instanceof Error ? e.message : 'Failed'); }
-    finally { setLoading(false); }
+      fetch('/api/insights', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(result),
+      })
+        .then(r => r.json())
+        .then(d => setInsights(d.insights || []))
+        .catch(() => {})
+        .finally(() => setInsightsLoading(false));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Analysis failed');
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  const exportReport = async (fmt: 'json' | 'csv') => {
+  const exportReport = async (fmt: string) => {
     if (!scan) return;
-    const res = await fetch('/api/export', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ scan, format: fmt }) });
-    const b = await res.blob(); const u = URL.createObjectURL(b);
-    const a = document.createElement('a'); a.href = u; a.download = `depscope-${scan.id.slice(0, 8)}.${fmt}`; a.click(); URL.revokeObjectURL(u);
+    const res = await fetch('/api/export', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ scan, format: fmt }),
+    });
+    const b = await res.blob();
+    const u = URL.createObjectURL(b);
+    const a = document.createElement('a');
+    a.href = u; a.download = `depscope-${scan.id.slice(0, 8)}.${fmt}`; a.click();
+    URL.revokeObjectURL(u);
   };
 
   if (!splashDone) return <SplashScreen onComplete={() => setSplashDone(true)} />;
 
   return (
-    <div className="flex-1 flex flex-col">
+    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       <Header />
-      <main className="flex-1 max-w-6xl w-full mx-auto px-6 py-10">
+
+      <main style={{
+        flex: 1, position: 'relative', zIndex: 10,
+        maxWidth: 1440, width: '100%', margin: '0 auto',
+        padding: '20px 20px 0',
+      }}>
         <AnimatePresence mode="wait">
-          {/* ═══ INPUT ═══ */}
+
+          {/* ════════════════════════════════════════
+              INPUT  SCREEN
+          ════════════════════════════════════════ */}
           {!scan && (
-            <motion.div key="input" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}
-              className="max-w-2xl mx-auto">
-              <div className="text-center mb-10">
-                <motion.h2 initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
-                  className="text-4xl md:text-5xl font-extrabold text-white leading-tight mb-4">
-                  Know your{' '}<span className="gradient-text">dependencies.</span>
-                </motion.h2>
-                <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }}
-                  className="text-lg" style={{ color: 'var(--text-2)' }}>
-                  Scan npm, Flutter, or Android dependencies for risk, vulnerabilities, and AI-powered insights.
-                </motion.p>
-              </div>
+            <motion.div key="input"
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -12 }}
+              transition={{ duration: 0.4, ease }}>
 
-              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
-                <PackageInput onSubmit={analyze} loading={loading} />
-              </motion.div>
-
-              <AnimatePresence>{error && (
-                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                  className="mt-5 p-4 rounded-xl text-sm font-medium"
-                  style={{ background: 'rgba(255,69,58,0.1)', color: 'var(--rose)', border: '1px solid rgba(255,69,58,0.2)' }}>{error}</motion.div>
-              )}</AnimatePresence>
-
-              {/* Features */}
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}
-                className="mt-14 grid grid-cols-1 sm:grid-cols-3 gap-4">
-                {[
-                  { icon: '📦', title: 'Multi-Ecosystem', desc: 'npm, Flutter & Android support', color: 'var(--blue)' },
-                  { icon: '🔒', title: 'Vuln Detection', desc: 'Registry + CVE scanning', color: 'var(--rose)' },
-                  { icon: '🤖', title: 'AI Analysis', desc: 'Llama 3.3 70B insights', color: 'var(--violet)' },
-                ].map((f, i) => (
-                  <motion.div key={i} whileHover={{ y: -4, borderColor: 'var(--border-2)' }}
-                    className="card p-6 text-center cursor-default transition-shadow hover:shadow-lg hover:shadow-[rgba(79,143,247,0.05)]">
-                    <span className="text-3xl block mb-3">{f.icon}</span>
-                    <h4 className="text-sm font-bold text-white mb-1">{f.title}</h4>
-                    <p className="text-sm" style={{ color: 'var(--text-3)' }}>{f.desc}</p>
+              {/* Error banner */}
+              <AnimatePresence>
+                {error && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+                    className="glass-cell glass-danger mb-3 flex items-center gap-3 px-5 py-3">
+                    <span style={{ fontSize: 16 }}>⚠</span>
+                    <span style={{ fontFamily: 'var(--sans)', fontSize: 14, color: '#F87171', fontWeight: 500 }}>
+                      {error}
+                    </span>
                   </motion.div>
-                ))}
-              </motion.div>
-            </motion.div>
-          )}
+                )}
+              </AnimatePresence>
 
-          {/* ═══ DASHBOARD ═══ */}
-          {scan && (
-            <motion.div key="results" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-              <div className="flex items-center justify-between mb-8">
-                <button onClick={() => { setScan(null); setInsights([]); setTab('table'); }} className="btn btn-ghost">← New Scan</button>
-                <div className="flex gap-2">
-                  {(['json', 'csv'] as const).map(f => <button key={f} onClick={() => exportReport(f)} className="btn btn-ghost">Export {f.toUpperCase()}</button>)}
-                </div>
-              </div>
+              {/* ── GLASS BENTO GRID ── */}
+              <div className="bento-grid" style={{ gridTemplateRows: 'auto auto auto auto' }}>
 
-              {/* Score + Stats */}
-              <div className="grid grid-cols-12 gap-5 mb-10">
-                <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
-                  className="col-span-12 md:col-span-4 lg:col-span-3 card-glow">
-                  <div className="bg-[var(--bg-2)] rounded-[17px] flex flex-col items-center justify-center p-8">
-                    <ScoreRing score={scan.overallScore} size={180} riskLevel={scan.overallRiskLevel} label="Risk Score" />
-                    <p className="text-lg font-bold text-white mt-4">{scan.projectName}</p>
-                    <div className="flex items-center justify-center gap-2 mt-2">
-                      <span className="pill !text-[10px]" style={{ background: 'rgba(79,143,247,0.1)', color: 'var(--blue)' }}>
-                        {scan.ecosystem === 'flutter' ? '🐦 Flutter' : scan.ecosystem === 'android' ? '🤖 Android' : '📦 npm'}
-                      </span>
-                      <span className="text-xs" style={{ color: 'var(--text-dim)' }}>{new Date(scan.timestamp).toLocaleString()}</span>
+                {/* Main hero input card — col 1-8, rows 1-3 */}
+                <motion.div className="glass-cell"
+                  style={{ gridColumn: '1 / 9', gridRow: '1 / 4', minHeight: 500 }}
+                  initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.5, delay: 0.05, ease }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', height: '100%', padding: '36px 40px', gap: 28 }}>
+                    {/* Eyebrow */}
+                    <div>
+                      <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, marginBottom: 18 }}>
+                        <span style={{
+                          padding: '4px 14px', borderRadius: 999,
+                          background: 'rgba(99,102,241,0.12)', border: '1px solid rgba(99,102,241,0.22)',
+                          fontFamily: 'var(--sans)', fontSize: 12, fontWeight: 600,
+                          color: '#818CF8', letterSpacing: '0.01em',
+                        }}>
+                          Dependency Intelligence
+                        </span>
+                      </div>
+                      <h1 className="display-heading">
+                        Know what<br />
+                        <span style={{
+                          background: 'linear-gradient(135deg, #818CF8 0%, #6366F1 50%, #60A5FA 100%)',
+                          WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+                          backgroundClip: 'text',
+                        }}>
+                          you ship.
+                        </span>
+                      </h1>
+                      <p style={{
+                        fontFamily: 'var(--sans)', fontSize: 15, color: 'rgba(255,255,255,0.48)',
+                        lineHeight: 1.65, marginTop: 16, maxWidth: 460, fontWeight: 400,
+                      }}>
+                        Multi-ecosystem scanner across npm, Rust, Go, Python, Flutter, Android,
+                        Ruby and .NET. Detect vulnerabilities, license conflicts, and supply chain
+                        threats before they reach production.
+                      </p>
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <PackageInput onSubmit={analyze} loading={loading} />
                     </div>
                   </div>
                 </motion.div>
-                <div className="col-span-12 md:col-span-8 lg:col-span-9 grid grid-cols-2 lg:grid-cols-4 gap-3">
-                  <StatCard label="Total" value={scan.totalDependencies} icon="📦" delay={0.05} />
-                  <StatCard label="Direct" value={scan.directDependencies} icon="→" accent="var(--blue)" delay={0.1} />
-                  <StatCard label="Dev" value={scan.devDependencies} icon="⚙" accent="var(--text-2)" delay={0.15} />
-                  <StatCard label="Critical" value={scan.criticalCount} icon="🚨" accent={scan.criticalCount > 0 ? 'var(--rose)' : 'var(--green)'} delay={0.2} />
-                  <StatCard label="High" value={scan.highCount} icon="⚠" accent={scan.highCount > 0 ? 'var(--rose)' : 'var(--green)'} delay={0.25} />
-                  <StatCard label="Medium" value={scan.mediumCount} icon="●" accent={scan.mediumCount > 0 ? 'var(--amber)' : 'var(--green)'} delay={0.3} />
-                  <StatCard label="Low" value={scan.lowCount} icon="✓" accent="var(--green)" delay={0.35} />
-                  <StatCard label="Vulns" value={scan.dependencies.reduce((s, d) => s + d.vulnerabilities.length, 0)} icon="🔒"
-                    accent={scan.dependencies.some(d => d.vulnerabilities.length > 0) ? 'var(--rose)' : 'var(--green)'} delay={0.4} />
+
+                {/* Right stat widgets */}
+                {[
+                  { label: 'Ecosystems', value: '8+',   sub: 'npm · Rust · Go · Python · Flutter', col: '9 / 11',  row: 1, delay: 0.12, tint: 'glass-blue' },
+                  { label: 'CVE Engine', value: 'OSV',  sub: 'Open source vulnerability intel',    col: '11 / 13', row: 1, delay: 0.16, tint: '' },
+                  { label: 'AI Engine',  value: 'LLM',  sub: 'Llama 3.3 70B via Groq',            col: '9 / 11',  row: 2, delay: 0.20, tint: '' },
+                  { label: 'Response',   value: '<60s', sub: 'Full scan with transitive graph',    col: '11 / 13', row: 2, delay: 0.24, tint: '' },
+                ].map(s => (
+                  <motion.div key={s.label} className={`glass-cell ${s.tint}`}
+                    style={{ gridColumn: s.col, gridRow: String(s.row), padding: 24, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}
+                    initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: s.delay, ease }}>
+                    <span className="cell-label">{s.label}</span>
+                    <div>
+                      <span className="cell-number cell-number-md" style={{ color: '#818CF8', marginBottom: 6 }}>{s.value}</span>
+                      <span className="cell-label" style={{ color: 'rgba(255,255,255,0.22)' }}>{s.sub}</span>
+                    </div>
+                  </motion.div>
+                ))}
+
+                {/* Supply chain promo — col 9-12, row 3 */}
+                <motion.div className="glass-cell"
+                  style={{ gridColumn: '9 / 13', gridRow: '3', padding: 24 }}
+                  initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.28, ease }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+                    <span style={{ fontSize: 15 }}>🔗</span>
+                    <span className="cell-label" style={{ color: 'rgba(129,140,248,0.75)' }}>Supply Chain</span>
+                  </div>
+                  <p style={{ fontFamily: 'var(--sans)', fontSize: 13, color: 'rgba(255,255,255,0.38)', lineHeight: 1.65, fontWeight: 400 }}>
+                    Typosquatting detection, install-script flags, license compliance,
+                    SBOM export (SPDX 2.3 + CycloneDX 1.5), CI policy engine.
+                  </p>
+                </motion.div>
+
+                {/* Feature cells — row 4 */}
+                {[
+                  { icon: '📦', label: 'Multi-Ecosystem',    desc: 'Paste any manifest or lock file — package.json, Cargo.lock, go.mod, requirements.txt, pubspec.yaml and more.', col: '1 / 5' },
+                  { icon: '🔒', label: 'Vulnerability Scan', desc: 'OSV + npm audit. CVSS scores, fix versions, transitive dependency paths, EPSS exploit prediction.',             col: '5 / 9' },
+                  { icon: '✨', label: 'AI Intelligence',    desc: 'LLM-powered analysis identifies upgrade paths, safer alternatives, and provides context-aware risk assessment.',  col: '9 / 13' },
+                ].map((f, i) => (
+                  <motion.div key={f.label} className="glass-cell"
+                    style={{ gridColumn: f.col, gridRow: '4', padding: 24 }}
+                    initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.38 + i * 0.07, ease }}>
+                    <div style={{ display: 'flex', gap: 14 }}>
+                      <span style={{ fontSize: 22, lineHeight: 1, flexShrink: 0, marginTop: 1 }}>{f.icon}</span>
+                      <div>
+                        <p style={{ fontFamily: 'var(--sans)', fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.75)', marginBottom: 6 }}>{f.label}</p>
+                        <p style={{ fontFamily: 'var(--sans)', fontSize: 13, color: 'rgba(255,255,255,0.38)', lineHeight: 1.65, fontWeight: 400 }}>{f.desc}</p>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
+          )}
+
+          {/* ════════════════════════════════════════
+              RESULTS  SCREEN
+          ════════════════════════════════════════ */}
+          {scan && (
+            <motion.div key="results"
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.4 }}>
+
+              {/* Action bar */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                <button className="btn-ghost" style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+                  onClick={() => { setScan(null); setInsights([]); setTab('table'); }}>
+                  ← New Scan
+                </button>
+                <div style={{ display: 'flex', gap: 6 }}>
+                  {(['json', 'csv', 'html', 'spdx', 'cyclonedx'] as const).map(f => (
+                    <button key={f} className="btn-ghost" style={{ fontSize: 11 }} onClick={() => exportReport(f)}>
+                      {f.toUpperCase()}
+                    </button>
+                  ))}
                 </div>
               </div>
 
-              {/* Tabs */}
-              <div className="flex gap-1 mb-8 p-1 rounded-xl w-fit" style={{ background: 'var(--bg-2)', border: '1px solid var(--border)' }}>
-                {([
-                  { id: 'table' as Tab, label: '📋 Dependencies', count: scan.totalDependencies },
-                  { id: 'graph' as Tab, label: '🕸 Graph' },
-                  { id: 'insights' as Tab, label: '🤖 AI Insights', count: insights.length || undefined },
-                ]).map(t => (
-                  <button key={t.id} onClick={() => setTab(t.id)}
-                    className="relative px-5 h-11 rounded-lg text-sm font-semibold transition-all"
-                    style={{ color: tab === t.id ? 'white' : 'var(--text-3)' }}>
-                    {tab === t.id && <motion.div layoutId="tabBg" className="absolute inset-0 rounded-lg"
-                      style={{ background: 'var(--bg-4)', border: '1px solid var(--border-2)' }}
-                      transition={{ type: 'spring', stiffness: 400, damping: 30 }} />}
-                    <span className="relative z-10 flex items-center gap-2">
-                      {t.label}
-                      {'count' in t && t.count != null && <span className="text-xs px-2 py-0.5 rounded-full"
-                        style={{ background: tab === t.id ? 'rgba(79,143,247,0.1)' : 'transparent', color: tab === t.id ? 'var(--blue)' : 'var(--text-dim)' }}>{t.count}</span>}
-                      {t.id === 'insights' && insightsLoading && <span className="w-2 h-2 rounded-full animate-pulse" style={{ background: 'var(--blue)' }} />}
-                    </span>
-                  </button>
-                ))}
-              </div>
+              {/* ── RESULTS GLASS GRID ── */}
+              <div className="bento-grid" style={{ gridTemplateRows: '196px 124px 76px auto' }}>
 
-              <AnimatePresence mode="wait">
-                {tab === 'table' && <motion.div key="t" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }}><DependencyTable dependencies={scan.dependencies} /></motion.div>}
-                {tab === 'graph' && <motion.div key="g" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }}><DependencyGraph tree={scan.tree} /></motion.div>}
-                {tab === 'insights' && <motion.div key="i" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }}><InsightsPanel insights={insights} loading={insightsLoading} /></motion.div>}
-              </AnimatePresence>
+                {/* Score — col 1-4, row 1-2 */}
+                <motion.div className="glass-cell glass-score"
+                  style={{ gridColumn: '1 / 5', gridRow: '1 / 3', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 14 }}
+                  initial={{ opacity: 0, scale: 0.93 }} animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.08, type: 'spring', stiffness: 180, damping: 20 }}>
+                  <span className="cell-label">Risk Score</span>
+                  <ScoreRing score={scan.overallScore} size={150} riskLevel={scan.overallRiskLevel} />
+                  <span style={{
+                    fontFamily: 'var(--sans)', fontSize: 13, fontWeight: 700,
+                    color: riskColor(scan.overallRiskLevel), letterSpacing: '0.02em',
+                    padding: '5px 16px', borderRadius: 999,
+                    background: `${riskColor(scan.overallRiskLevel)}18`,
+                    border: `1px solid ${riskColor(scan.overallRiskLevel)}30`,
+                    textTransform: 'capitalize',
+                  }}>
+                    {scan.overallRiskLevel} Risk
+                  </span>
+                </motion.div>
+
+                {/* Project info — col 5-9, row 1 */}
+                <motion.div className="glass-cell"
+                  style={{ gridColumn: '5 / 9', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: '24px 28px' }}
+                  initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.13, ease }}>
+                  <span className="cell-label">Project</span>
+                  <div>
+                    <span className="cell-number" style={{ fontSize: 'clamp(20px, 2.5vw, 32px)', marginBottom: 12, color: 'rgba(255,255,255,0.92)' }}>
+                      {scan.projectName}
+                    </span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                      <span style={{
+                        padding: '5px 14px', borderRadius: 999,
+                        background: 'rgba(99,102,241,0.10)', border: '1px solid rgba(99,102,241,0.20)',
+                        fontFamily: 'var(--sans)', fontSize: 12, fontWeight: 600, color: '#818CF8',
+                      }}>
+                        {ecoLabel(scan.ecosystem)}
+                      </span>
+                      <span style={{ fontFamily: 'var(--sans)', fontSize: 12, color: 'rgba(255,255,255,0.28)', fontWeight: 400 }}>
+                        {new Date(scan.timestamp).toLocaleString()}
+                      </span>
+                    </div>
+                  </div>
+                </motion.div>
+
+                {/* Critical — col 9-13, row 1 */}
+                <motion.div className={`glass-cell ${scan.criticalCount > 0 ? 'glass-danger' : ''}`}
+                  style={{ gridColumn: '9 / 13', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: '22px 24px' }}
+                  initial={{ opacity: 0, x: 12 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.16, ease }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span className="cell-label">Critical</span>
+                  </div>
+                  <div>
+                    <span className="cell-number cell-number-xl"
+                      style={{ color: scan.criticalCount > 0 ? '#F87171' : 'rgba(255,255,255,0.18)' }}>
+                      {scan.criticalCount}
+                    </span>
+                    <span className="cell-label" style={{ marginTop: 4 }}>critical risk deps</span>
+                  </div>
+                </motion.div>
+
+                {/* Row 2: stat quartet — col 5-12 */}
+                {[
+                  { label: 'Total Deps', value: scan.totalDependencies, color: 'rgba(255,255,255,0.85)', col: '5 / 7' },
+                  { label: 'High Risk',  value: scan.highCount,         color: scan.highCount   > 0 ? '#F87171' : 'rgba(255,255,255,0.28)', col: '7 / 9' },
+                  { label: 'Medium',     value: scan.mediumCount,       color: scan.mediumCount > 0 ? '#FBBF24' : 'rgba(255,255,255,0.28)', col: '9 / 11' },
+                  { label: 'Low Risk',   value: scan.lowCount,          color: '#34D399',                col: '11 / 13' },
+                ].map((m, i) => (
+                  <motion.div key={m.label} className="glass-cell"
+                    style={{ gridColumn: m.col, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: '18px 22px' }}
+                    initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.20 + i * 0.04, ease }}>
+                    <span className="cell-label">{m.label}</span>
+                    <span className="cell-number cell-number-md" style={{ color: m.color }}>{m.value}</span>
+                  </motion.div>
+                ))}
+
+                {/* Row 3: detail strip — col 1-12 */}
+                {[
+                  { label: 'Direct',          value: scan.directDependencies,    col: '1 / 4',   color: 'rgba(255,255,255,0.7)' },
+                  { label: 'Dev Deps',        value: scan.devDependencies,       col: '4 / 7',   color: 'rgba(255,255,255,0.4)' },
+                  { label: 'Vulnerabilities', value: scan.dependencies.reduce((s, d) => s + d.vulnerabilities.length, 0),
+                    col: '7 / 10', color: scan.dependencies.some(d => d.vulnerabilities.length > 0) ? '#F87171' : '#34D399' },
+                  { label: 'Ecosystem',       value: ecoLabel(scan.ecosystem),   col: '10 / 13', color: '#818CF8', mono: true },
+                ].map((m, i) => (
+                  <motion.div key={m.label} className="glass-cell"
+                    style={{ gridColumn: m.col, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 22px' }}
+                    initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.34 + i * 0.04, ease }}>
+                    <span className="cell-label">{m.label}</span>
+                    <span style={{
+                      fontFamily: 'mono' in m && m.mono ? 'var(--mono)' : 'var(--sans)',
+                      fontWeight: 'mono' in m && m.mono ? 500 : 800,
+                      fontSize: 'mono' in m && m.mono ? 13 : 24,
+                      letterSpacing: 'mono' in m && m.mono ? undefined : '-0.03em',
+                      color: m.color,
+                    }}>{m.value}</span>
+                  </motion.div>
+                ))}
+
+                {/* Tabs + Content — col 1-12, row 4 */}
+                <motion.div className="glass-cell" style={{ gridColumn: '1 / 13', overflow: 'hidden' }}
+                  initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.46, ease }}>
+
+                  {/* iOS-style segment tab bar */}
+                  <div style={{ display: 'flex', alignItems: 'flex-end', borderBottom: '1px solid rgba(255,255,255,0.08)', padding: '0 6px' }}>
+                    {([
+                      { id: 'table'    as Tab, label: 'Dependencies',  count: scan.totalDependencies },
+                      { id: 'graph'    as Tab, label: 'Graph' },
+                      { id: 'insights' as Tab, label: 'AI Insights', count: insights.length || undefined, pulsing: insightsLoading },
+                    ]).map(t => {
+                      const active = tab === t.id;
+                      return (
+                        <button key={t.id} onClick={() => setTab(t.id)}
+                          style={{
+                            display: 'flex', alignItems: 'center', gap: 8,
+                            padding: '14px 20px', background: 'none', border: 'none',
+                            borderBottom: active ? '2px solid #818CF8' : '2px solid transparent',
+                            marginBottom: -1, cursor: 'pointer', transition: 'all 0.2s ease',
+                            fontFamily: 'var(--sans)', fontSize: 13, fontWeight: active ? 600 : 500,
+                            letterSpacing: '-0.01em',
+                            color: active ? '#818CF8' : 'rgba(255,255,255,0.35)',
+                          }}>
+                          {t.label}
+                          {t.count != null && (
+                            <span style={{
+                              fontFamily: 'var(--sans)', fontSize: 11, fontWeight: 600,
+                              padding: '2px 8px', borderRadius: 999,
+                              background: active ? 'rgba(99,102,241,0.12)' : 'rgba(255,255,255,0.07)',
+                              color: active ? '#818CF8' : 'rgba(255,255,255,0.28)',
+                            }}>{t.count}</span>
+                          )}
+                          {t.pulsing && (
+                            <span className="live-dot" style={{ width: 6, height: 6, borderRadius: '50%', background: '#818CF8', flexShrink: 0 }} />
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Tab content */}
+                  <AnimatePresence mode="wait">
+                    {tab === 'table' && (
+                      <motion.div key="tbl" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.18 }}>
+                        <DependencyTable dependencies={scan.dependencies} />
+                      </motion.div>
+                    )}
+                    {tab === 'graph' && (
+                      <motion.div key="gph" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.18 }}>
+                        <DependencyGraph tree={scan.tree} />
+                      </motion.div>
+                    )}
+                    {tab === 'insights' && (
+                      <motion.div key="ins" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.18 }}>
+                        <InsightsPanel insights={insights} loading={insightsLoading} />
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </motion.div>
+
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
       </main>
 
-      <footer className="border-t py-5 px-6" style={{ borderColor: 'var(--border)' }}>
-        <div className="max-w-6xl mx-auto flex justify-between text-xs" style={{ color: 'var(--text-dim)' }}>
-          <span>DepScope v1.0</span><span>AI powered by Llama 3.3 70B via Groq</span>
+      {/* Footer */}
+      <footer style={{
+        position: 'relative', zIndex: 10, marginTop: 32,
+        borderTop: '1px solid rgba(255,255,255,0.07)', padding: '14px 24px',
+      }}>
+        <div style={{
+          maxWidth: 1440, margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+          fontFamily: 'var(--sans)', fontSize: 12, color: 'rgba(255,255,255,0.22)', fontWeight: 400,
+        }}>
+          <span>DepScope v2.0</span>
+          <span>AI: Llama 3.3 70B · Groq · OSV · npm audit</span>
         </div>
       </footer>
     </div>

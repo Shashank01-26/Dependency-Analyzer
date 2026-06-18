@@ -33,40 +33,46 @@ export default function DependencyTable({ dependencies }: { dependencies: Analyz
   const rc = (l: string) => l === 'low' ? 'var(--green)' : l === 'medium' ? 'var(--amber)' : 'var(--rose)';
 
   return (
-    <div className="card overflow-hidden">
-      <div className="flex items-center justify-between px-6 h-16 border-b" style={{ borderColor: 'var(--border)' }}>
+    <div>
+      <div className="flex items-center justify-between px-5 py-3 border-b" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
         <div className="flex items-center gap-3">
-          <h3 className="text-sm font-bold text-white uppercase tracking-wide">Dependencies</h3>
-          <span className="pill text-xs" style={{ background: 'rgba(79,143,247,0.1)', color: 'var(--blue)' }}>{sorted.length}</span>
+          <span style={{ fontFamily: 'var(--sans)', fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.6)' }}>
+            Dependencies
+          </span>
+          <span style={{
+            padding: '3px 10px', borderRadius: 999,
+            background: 'rgba(99,102,241,0.10)', border: '1px solid rgba(99,102,241,0.18)',
+            fontFamily: 'var(--sans)', fontSize: 11, fontWeight: 600, color: '#818CF8',
+          }}>{sorted.length}</span>
         </div>
         <div className="flex items-center gap-4">
           <label className="flex items-center gap-2 cursor-pointer">
-            <input type="checkbox" checked={showDev} onChange={e => setShowDev(e.target.checked)} className="accent-[var(--blue)] w-4 h-4" />
-            <span className="text-sm" style={{ color: 'var(--text-3)' }}>Dev</span>
+            <input type="checkbox" checked={showDev} onChange={e => setShowDev(e.target.checked)} className="w-3.5 h-3.5" style={{ accentColor: '#818CF8' }} />
+            <span style={{ fontFamily: 'var(--sans)', fontSize: 12, color: 'rgba(255,255,255,0.35)', fontWeight: 500 }}>Show Dev</span>
           </label>
-          <input type="text" placeholder="Filter..." value={filter} onChange={e => setFilter(e.target.value)} className="px-4 py-2 text-sm rounded-lg w-40" />
+          <input type="text" placeholder="Filter packages…" value={filter} onChange={e => setFilter(e.target.value)} className="px-3 py-2 text-sm w-44" />
         </div>
       </div>
 
       <div className="overflow-x-auto">
         <table className="w-full">
           <thead>
-            <tr style={{ background: 'var(--bg-3)' }}>
-              {([{ f: 'name' as SortField, l: 'Package' }, { f: 'score' as SortField, l: 'Risk' }, { f: 'downloads' as SortField, l: 'Downloads/wk' }, { f: 'maintainers' as SortField, l: 'Maintainers' }]).map(col => (
+            <tr style={{ background: 'rgba(255,255,255,0.03)' }}>
+              {([{ f: 'name' as SortField, l: 'Package' }, { f: 'score' as SortField, l: 'Risk' }, { f: 'downloads' as SortField, l: 'Downloads / wk' }, { f: 'maintainers' as SortField, l: 'Maintainers' }]).map(col => (
                 <th key={col.f} onClick={() => toggle(col.f)}
-                  className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wide cursor-pointer select-none transition-colors hover:text-white"
-                  style={{ color: sf === col.f ? 'var(--blue)' : 'var(--text-3)', borderBottom: '1px solid var(--border)' }}>
-                  {col.l} <span className="opacity-40">{sf === col.f ? (sd === 'desc' ? '↓' : '↑') : ''}</span>
+                  className="px-5 py-3 text-left cursor-pointer select-none"
+                  style={{ fontFamily: 'var(--sans)', fontSize: 11, fontWeight: 600, color: sf === col.f ? '#818CF8' : 'rgba(255,255,255,0.28)', borderBottom: '1px solid rgba(255,255,255,0.07)', transition: 'color 0.15s', letterSpacing: '0.01em' }}>
+                  {col.l} <span style={{ opacity: 0.5 }}>{sf === col.f ? (sd === 'desc' ? '↓' : '↑') : ''}</span>
                 </th>
               ))}
-              <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wide" style={{ color: 'var(--text-3)', borderBottom: '1px solid var(--border)' }}>Flags</th>
+              <th className="px-5 py-3 text-left" style={{ fontFamily: 'var(--sans)', fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.28)', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>Flags</th>
             </tr>
           </thead>
           <tbody>
             {sorted.map((dep, i) => (
               <motion.tr key={dep.name} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.02 }}
-                className="cursor-pointer transition-colors hover:bg-[var(--bg-3)]"
-                style={{ borderBottom: '1px solid var(--border)' }}
+                className="cursor-pointer transition-colors hover:bg-[rgba(255,255,255,0.04)]"
+                style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}
                 onClick={() => setExpanded(expanded === dep.name ? null : dep.name)}>
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-2">
@@ -104,7 +110,7 @@ export default function DependencyTable({ dependencies }: { dependencies: Analyz
           if (!dep) return null;
           return (
             <motion.div key={expanded} initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}
-              className="overflow-hidden border-t" style={{ borderColor: 'var(--border)', background: 'var(--bg-3)' }}>
+              className="overflow-hidden border-t" style={{ borderColor: 'rgba(255,255,255,0.07)', background: 'rgba(255,255,255,0.03)' }}>
               <div className="p-6 grid grid-cols-2 md:grid-cols-4 gap-6">
                 <div>
                   <h4 className="text-xs font-bold uppercase tracking-wide mb-3" style={{ color: 'var(--text-3)' }}>Risk Breakdown</h4>
